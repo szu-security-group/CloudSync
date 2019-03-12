@@ -3,3 +3,7 @@
 
 # PyCharm
 .idea/
+
+# Python
+venv/
+*/__pycache__/
