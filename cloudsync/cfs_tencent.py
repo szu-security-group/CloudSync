@@ -21,10 +21,11 @@ client = CosS3Client(config)
 bucket = '{bucket_name}-{app_id}'.format(bucket_name=cos_config.tencent['bucket_name'],
                                          app_id=cos_config.tencent['app_id'])
 
-
-# local_path = cos_config.tencent['local_path']
-# cloud_path = cos_config.tencent['cloud_path']
-# history_path = cos_config.tencent['history_path']
+path_config = {
+    'history_path': cos_config.tencent['history_path'],
+    'local_path': cos_config.tencent['local_path'],
+    'cloud_path': cos_config.tencent['cloud_path']
+}
 
 
 def upload(cloud_path, local_path):

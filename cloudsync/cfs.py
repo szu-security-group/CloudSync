@@ -2,6 +2,12 @@ import os
 
 
 class CloudFileSystem:
+    config = {
+        'history_path': '',
+        'local_path': '',
+        'cloud_path': ''
+    }
+
     def __init__(self, csp_):
         self.csp = csp_
         if not os.path.exists('cfs_{csp}.py'.format(csp=self.csp)):
@@ -21,3 +27,6 @@ class CloudFileSystem:
         self.get_hash = cfs.get_hash
         self.set_mtime = cfs.set_mtime
         self.get_mtime = cfs.get_mtime
+        self.config['history_path'] = cfs.path_config['history_path']
+        self.config['local_path'] = cfs.path_config['local_path']
+        self.config['cloud_path'] = cfs.path_config['cloud_path']
