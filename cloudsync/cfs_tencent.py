@@ -141,14 +141,16 @@ def rename(old_cloud_path, new_cloud_path):
         return response
 
 
-def create_folder(cloud_path):
+def create_folder(cloud_path: str):
     """
     创建一个空目录
     要求附加最新修改时间 mtime
     :param cloud_path:
     :return:
     """
-    # todo: 应当加入校验 cloud_path 结尾是不是 / , 否则上传之后不会表现为文件夹
+    # cloud_path 结尾若不是 / , 上传之后不会表现为文件夹
+    if not cloud_path.endswith('/'):
+        cloud_path += '/'
     response = client.put_object(Bucket=bucket,
                                  Key=cloud_path,
                                  Body=b'',
@@ -167,10 +169,9 @@ def stat_file(cloud_path):
     :return:
     """
     metadata = client.head_object(Bucket=bucket, Key=cloud_path)
-    # todo: 我反而觉得这里需要加入检验 key 是否存在
     return {
-        'hash': metadata['x-cos-meta-hash'],
-        'mtime': metadata['x-cos-meta-mtime']
+        'hash': metadata['x-cos-meta-hash'] if 'x-cos-meta-hash' in metadata.keys() else get_hash(cloud_path),
+        'mtime': metadata['x-cos-meta-mtime'] if 'x-cos-meta-mtime' in metadata.keys() else get_mtime(cloud_path)
     }
 
 
@@ -182,14 +183,14 @@ def list_files(cloud_path):
     :return:
     """
     files = []
-    listing = client.list_objects(Bucket=bucket, Prefix=cloud_path, Delimiter='/')
+    items = client.list_objects(Bucket=bucket, Prefix=cloud_path, Delimiter='/')
     # 添加目录名
-    if 'CommonPrefixes' in listing.keys():
-        dirs = [item['Prefix'] for item in listing['CommonPrefixes']]
+    if 'CommonPrefixes' in items.keys():
+        dirs = [item['Prefix'] for item in items['CommonPrefixes']]
         files += [filename.split('/')[-2] + '/' for filename in dirs if filename.endswith('/')]
-    # 添加文件名 todo: 改个变量名
-    listing = [item['Key'] for item in listing['Contents']]
-    files += [filename.split('/')[-1] for filename in listing if not filename.endswith('/')]
+    # 添加文件名
+    items = [item['Key'] for item in items['Contents']]
+    files += [filename.split('/')[-1] for filename in items if not filename.endswith('/')]
     return files
 
 
