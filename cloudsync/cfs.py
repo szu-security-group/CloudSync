@@ -15,6 +15,7 @@ class CloudFileSystem:
             print('error!')
             return
         cfs = __import__('cfs_{csp}'.format(csp=self.csp))
+        cfs = cfs.CloudFileSystem()
         self.upload = cfs.upload
         self.download = cfs.download
         self.delete = cfs.delete
