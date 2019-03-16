@@ -1,4 +1,5 @@
 import hashlib
+from cfs import CloudFileSystem
 from catalog import Catalog, DirectoryStatus, FileStatus
 from directory_form_producer import initialize_metatree_local, initialize_metatree_cloud
 
@@ -27,8 +28,8 @@ def get_buffer_hash(buffer: bytes):
     return getattr(hashlib, hash_type)(buffer).hexdigest()
 
 
-def get_cloud_file_hash(cloud_path, cloud_download_function):
-    cloud_download_function(cloud_path, temp_file_path)
+def get_cloud_file_hash(cloud_path, cfs: CloudFileSystem):
+    cfs.download(cloud_path, temp_file_path)
     return get_local_file_hash(temp_file_path)
 
 
