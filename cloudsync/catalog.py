@@ -11,13 +11,12 @@ class Catalog:
     # 文件哈希值
     hash_value = ''
     # 文件修改时间
-    mtime = 0
+    mtime = ''
     # 文件目录标志
     type = 0
 
     def __init__(self, filename):
         self.filename = filename
-        self.type = self.IS_FOLDER
 
     def __eq__(self, other):
         return self.filename == str(other.filename)
@@ -35,11 +34,11 @@ class Catalog:
 class DirectoryStatus(Catalog):
     def __init__(self, filename, child=None):
         if child is None:
-            super(Catalog, self).__init__(filename)
-            super.type = Catalog.IS_FOLDER
+            super().__init__(filename)
+            self.type = Catalog.IS_FOLDER
             self.child = SortedSet([])
         else:
-            super(Catalog, self).__init__(filename)
+            super().__init__(filename)
             self.child = child
 
     def insert(self, catalog):
@@ -89,7 +88,7 @@ class DirectoryStatus(Catalog):
 
 class FileStatus(Catalog):
     def __init__(self, filename, hash_value=None, mtime=None):
-        super(Catalog, self).__init__(filename)
+        super().__init__(filename)
         self.type = self.IS_FILE
         if hash_value is not None:
             self.hash_value = hash_value
