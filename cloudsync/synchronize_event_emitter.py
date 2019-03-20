@@ -2,7 +2,7 @@ from catalog import DirectoryStatus, FileStatus
 from cos_config import ops_constants
 
 
-class CloudUpdateParameterServer:
+class SynchronizeEventEmitter:
     """
     任务参数管理，中介对象
     存储任务需要的信息，以及通知相应任务

@@ -1,7 +1,7 @@
 import sys
 
 from cfs import CloudFileSystem
-from synchronization_single_cloud import SynchronizationSingleCloud
+from synchronize import Synchronize
 
 
 def main():
@@ -26,7 +26,7 @@ def start_sync(csp):
         print("Unknown COS Service Provider!")
         return
 
-    SynchronizationSingleCloud(cfs).start()
+    Synchronize(cfs).start()
 
 
 def print_help():

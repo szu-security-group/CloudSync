@@ -2,11 +2,11 @@ import os
 
 from cfs import CloudFileSystem
 from cos_config import ops_constants
-from cloud_update_parameter_server import CloudUpdateParameterServer
+from synchronize_event_emitter import SynchronizeEventEmitter
 from directory_form_producer import DirectoryStatus, FileStatus
 
 
-class CloudUpdateHandlerSingleCOS:
+class SynchronizeEventHandler:
     cfs: CloudFileSystem = ''
 
     def __init__(self, cfs):
@@ -248,7 +248,7 @@ class CloudUpdateHandlerSingleCOS:
         filename = to_path.split('/')[-2] + '/'
         directory_status.filename = filename
 
-    def update(self, observable: CloudUpdateParameterServer):
+    def update(self, observable: SynchronizeEventEmitter):
         task_index = observable.task_index
         from_path = observable.from_path
         to_path = observable.to_path

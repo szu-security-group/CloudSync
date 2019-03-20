@@ -6,12 +6,12 @@ import utils
 from cos_config import ops_constants
 from catalog import Catalog, DirectoryStatus, FileStatus
 from cfs import CloudFileSystem
-from cloud_update_parameter_server import CloudUpdateParameterServer
-from cloud_update_handler_single_cos import CloudUpdateHandlerSingleCOS
+from synchronize_event_emitter import SynchronizeEventEmitter
+from synchronize_event_handler import SynchronizeEventHandler
 from directory_form_producer import initialize_metatree_cloud, initialize_metatree_local
 
 
-class SynchronizationSingleCloud:
+class Synchronize:
     close = True
     history_path = ''
     local_path = ''
@@ -27,8 +27,8 @@ class SynchronizationSingleCloud:
         self.history_path = cfs.config['history_path']
         self.local_path = cfs.config['local_path']
         self.cloud_path = cfs.config['cloud_path']
-        self.tasks = CloudUpdateParameterServer()
-        self.tasks.register(CloudUpdateHandlerSingleCOS(self.cfs))
+        self.tasks = SynchronizeEventEmitter()
+        self.tasks.register(SynchronizeEventHandler(self.cfs))
         # 按下 Ctrl+C 之后停止同步程序
         signal.signal(signal.SIGINT, self.stop)
 
