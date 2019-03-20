@@ -33,16 +33,14 @@ class Catalog:
 
 
 class DirectoryStatus(Catalog):
-    # 子节点集
-    child = SortedSet()
-
-    def __init__(self, filename):
-        super(Catalog, self).__init__(filename)
-        super.type = Catalog.IS_FOLDER
-
-    def __init__(self, filename, child):
-        super(Catalog, self).__init__(filename)
-        self.child = child
+    def __init__(self, filename, child=None):
+        if child is None:
+            super(Catalog, self).__init__(filename)
+            super.type = Catalog.IS_FOLDER
+            self.child = SortedSet([])
+        else:
+            super(Catalog, self).__init__(filename)
+            self.child = child
 
     def insert(self, catalog):
         self.child.add(catalog)
@@ -55,10 +53,7 @@ class DirectoryStatus(Catalog):
         if isinstance(object_, Catalog):
             self.child.remove(object_)
 
-    def find_catalog(self, object_):
-        return self.find_catalog(object_, 1)
-
-    def find_catalog(self, object_, number):
+    def find_catalog(self, object_, number=1):
         if isinstance(object_, str):
             for obj in self.child.__iter__():
                 if obj.filename == str(object_) or obj.hash_value == str(object_):
@@ -93,15 +88,13 @@ class DirectoryStatus(Catalog):
 
 
 class FileStatus(Catalog):
-    def __init__(self, filename):
+    def __init__(self, filename, hash_value=None, mtime=None):
         super(Catalog, self).__init__(filename)
         self.type = self.IS_FILE
-
-    def __init__(self, filename, hash_value, mtime):
-        super(Catalog, self).__init__(filename)
-        self.type = self.IS_FILE
-        self.hash_value = hash_value
-        self.mtime = mtime
+        if hash_value is not None:
+            self.hash_value = hash_value
+        if mtime is not None:
+            self.mtime = mtime
 
     def copy(self, file_status):
         self.filename = file_status.filename
