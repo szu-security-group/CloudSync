@@ -1,4 +1,4 @@
-from sortedcontainers import SortedSet
+from sortedcontainers import SortedList
 
 
 class Catalog:
@@ -36,13 +36,14 @@ class DirectoryStatus(Catalog):
         if child is None:
             super().__init__(filename)
             self.type = Catalog.IS_FOLDER
-            self.child = SortedSet([])
+            self.child = SortedList([])
         else:
             super().__init__(filename)
             self.child = child
 
     def insert(self, catalog):
-        self.child.add(catalog)
+        if catalog not in self.child:
+            self.child.add(catalog)
 
     def remove(self, object_):
         if isinstance(object_, str):
