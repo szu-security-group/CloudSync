@@ -4,14 +4,6 @@ from cfs import CloudFileSystem
 from synchronize import Synchronize
 
 
-def main():
-    if len(sys.argv) == 3 and sys.argv[1] in ['-s', '--sync'] and sys.argv[2] in ['tencent', 'ali']:
-        print('Start sync with {csp}...'.format(csp=sys.argv[2]))
-        start_sync(csp=sys.argv[2])
-    else:
-        print_help()
-
-
 def start_sync(csp):
     """
     根据 cosp 的名字启动对应的同步程序
@@ -39,4 +31,8 @@ options:
 
 
 if __name__ == '__main__':
-    main()
+    if len(sys.argv) == 3 and sys.argv[1] in ['-s', '--sync'] and sys.argv[2] in ['tencent', 'ali']:
+        print('Start sync with {csp}...'.format(csp=sys.argv[2]))
+        start_sync(csp=sys.argv[2])
+    else:
+        print_help()
