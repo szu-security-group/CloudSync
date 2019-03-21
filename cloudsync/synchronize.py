@@ -29,6 +29,8 @@ class Synchronize:
         self.cloud_path = cfs.config['cloud_path']
         self.tasks = SynchronizeEventEmitter()
         self.tasks.register(SynchronizeEventHandler(self.cfs))
+        # 将工作目录切换成 local_path
+        os.chdir(self.local_path)
         # 按下 Ctrl+C 之后停止同步程序
         signal.signal(signal.SIGINT, self.stop)
 
