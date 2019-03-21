@@ -62,22 +62,24 @@ class Synchronize:
         则视为首次运行，历史记录结构为只有根目录的树；历史文件将会直接影响到文件的唯一状态信息。
         :return:
         """
-        if os.path.exists(self.history_path) and os.path.getsize(self.history_path) > 0:
+        # 获取历史树结构
+        if not os.path.exists(self.history_path):
+            print('Historical file not found! It will be created later...')
+            open(self.history_path, 'w').close()  # create historical file
+        if os.path.getsize(self.history_path) > 0:
             try:
                 with open(self.history_path, 'rb') as f:
                     self.metatree_history: DirectoryStatus = pickle.load(f)
-                print('find historical file!')
+                print('Successfully load metatree-history from historical file!')
             except Exception as e:
                 print('Read historical file error!')
                 print(e)
         else:
-            open(self.history_path, 'w').close()  # create history file
             self.metatree_history = DirectoryStatus('/')
-            print('Historical file not found!')
         # 获取最新树结构
         self.metatree_cloud = initialize_metatree_cloud(self.cloud_path, self.cfs.list_files, self.cfs.get_mtime)
         self.metatree_local = initialize_metatree_local(self.local_path)
-        # 计算树的摘要
+        # 计算最新树摘要
         utils.get_entire_cloud_directory_hash(self.cloud_path, self.cfs.get_hash, self.metatree_cloud)
         utils.get_entire_local_directory_hash(self.local_path, self.metatree_local)
 
