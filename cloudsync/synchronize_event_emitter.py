@@ -39,6 +39,8 @@ class SynchronizeEventEmitter:
                           ops_constants['RENAME_LOCAL_FOLDER'],
                           ops_constants['CREATE_LOCAL_FOLDER']
                           ]:
+            self.directory_list = obj
+            self.from_path = args[0]
             self.to_path = args[1]
         if task_index in [ops_constants['DELETE_CLOUD_FILE'],
                           ops_constants['DELETE_CLOUD_FOLDER']]:
