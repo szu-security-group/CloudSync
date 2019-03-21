@@ -22,6 +22,8 @@ class SynchronizeEventHandler:
         """
         print('Create cloud folder: from {from_path} to {to_path}'
               .format(from_path=from_path, to_path=to_path))
+        self.cfs.create_folder(to_path)
+        # 缓存树新增空子目录
         folder_name = to_path.split('/')[-2] + '/'
         dir_child = DirectoryStatus(folder_name)
         directory_status.insert(dir_child)
@@ -132,7 +134,7 @@ class SynchronizeEventHandler:
                 dir_child.remove(filename)
                 os.remove(filename)
         directory_status.remove(folder_name + '/')
-        os.remove(folder_name)
+        os.removedirs(folder_name)
 
     def update_cloud_file(self, from_path, to_path, file_status):
         """
