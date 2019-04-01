@@ -105,7 +105,7 @@ class SynchronizeEventHandler:
         """
         print('Delete cloud folder: {cloud_path}'
               .format(cloud_path=cloud_path))
-        folder_name = cloud_path.split('/')[-2]
+        folder_name = cloud_path.split('/')[-2] + '/'
         dir_child = directory_status.find_catalog(folder_name)
         for filename in self.cfs.list_files(cloud_path):
             if filename.endswith('/'):
@@ -114,7 +114,7 @@ class SynchronizeEventHandler:
                 directory_status.remove(filename)
                 self.cfs.delete(cloud_path + filename)
         directory_status.remove(folder_name)
-        self.cfs.delete(folder_name)
+        self.cfs.delete(cloud_path)
 
     def delete_local_folder(self, local_path, directory_status):
         """
