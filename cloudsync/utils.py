@@ -1,3 +1,5 @@
+import os
+import sys
 import hashlib
 from cfs import CloudFileSystem
 from catalog import Catalog, DirectoryStatus, FileStatus
@@ -5,8 +7,8 @@ from directory_form_producer import initialize_metatree_local, initialize_metatr
 
 # 加密算法 (可选 sha1 | sha256 | sha512)
 hash_type = "sha256"
-# 临时文件路径，计算腾讯云文件的摘要时，预先将文件下载至临时文件
-temp_file_path = "cloudsync_temp_file"
+# 临时文件路径，计算云文件的摘要时，预先将文件下载至临时文件
+temp_file_path = os.path.join(sys.path[0], 'cloudsync_temp_file')
 
 
 def get_local_file_hash(file_path):
