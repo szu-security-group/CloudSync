@@ -91,7 +91,7 @@ class CloudFileSystem:
             response = self._client.put_object(key=cloud_path,
                                                data=f,
                                                headers={
-                                                   'Content-Length': os.path.getsize(local_path),
+                                                   'Content-Length': str(os.path.getsize(local_path)),
                                                    'x-oss-meta-mtime': str(int(time.time())),
                                                    'x-oss-meta-hash': utils.get_local_file_hash(local_path)
                                                })
