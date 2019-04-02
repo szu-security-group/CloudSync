@@ -229,7 +229,7 @@ class Synchronize:
                     else:
                         # 在历史记录中无法根据名字以及摘要找到相应记录，下载此目录
                         self.tasks.set_data(history, ops_constants['CREATE_LOCAL_FOLDER'],
-                                            next_cloud_path, next_cloud_path)
+                                            next_cloud_path, next_local_path)
                     continue
                 # 在历史纪录中，根据名字找到一个目录，但这个目录在本地不存在，说明本地删除了此目录，则删除这个云端目录
                 if name_history is not None and name_local is None:
