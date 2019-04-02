@@ -175,7 +175,7 @@ class CloudFileSystem:
         :return:
         """
         metadata = self._client.head_object(key=cloud_path)
-        metadata = {key: value for key, value in metadata.headers if key.startswith('x-oss-meta-')}
+        metadata = {key: metadata.headers[key] for key in metadata.headers if key.startswith('x-oss-meta-')}
         metadata['x-oss-meta-hash'] = str(hash_value)
         response = self._client.copy_object(source_bucket_name=self._bucket_name,
                                             source_key=cloud_path,
@@ -206,7 +206,7 @@ class CloudFileSystem:
         :return:
         """
         metadata = self._client.head_object(key=cloud_path)
-        metadata = {key: value for key, value in metadata.headers if key.startswith('x-oss-meta-')}
+        metadata = {key: metadata.headers[key] for key in metadata.headers if key.startswith('x-oss-meta-')}
         metadata['x-oss-meta-mtime'] = str(mtime)
         response = self._client.copy_object(source_bucket_name=self._bucket_name,
                                             source_key=cloud_path,
