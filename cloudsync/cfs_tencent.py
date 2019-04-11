@@ -1,7 +1,6 @@
 import os
 import time
-from qcloud_cos import CosConfig
-from qcloud_cos import CosS3Client
+import qcloud_cos
 
 import cos_config
 import utils
@@ -15,8 +14,8 @@ secret_id = cos_config.tencent['secret_id']
 secret_key = cos_config.tencent['secret_key']
 region = cos_config.tencent['region']
 token = None
-config = CosConfig(Region=region, SecretId=secret_id, SecretKey=secret_key, Token=token)  # 获取配置对象
-client = CosS3Client(config)
+config = qcloud_cos.CosConfig(Region=region, SecretId=secret_id, SecretKey=secret_key, Token=token)  # 获取配置对象
+client = qcloud_cos.CosS3Client(config)
 
 bucket = '{bucket_name}-{app_id}'.format(bucket_name=cos_config.tencent['bucket_name'],
                                          app_id=cos_config.tencent['app_id'])
