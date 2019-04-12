@@ -266,7 +266,8 @@ class Synchronize:
                             self.tasks.set_data(history, ops_constants['DELETE_CLOUD_FILE'],
                                                 next_cloud_path)
 
-    def find_rename_folder(self, history: DirectoryStatus, local: DirectoryStatus, hash_value: str):
+    @staticmethod
+    def find_rename_folder(history: DirectoryStatus, local: DirectoryStatus, hash_value: str):
         """
         在历史记录中，找到具有重命名规则的某个目录；
         重命名规则：本地一个目录名，历史不存在，但二者摘要值一样，
@@ -277,17 +278,19 @@ class Synchronize:
         :return: 重命名的子目录或者为空
         """
         number = 1
-        hash_history: DirectoryStatus = None
-        while True:
+        exit_flag = 0
+        hash_history = None
+        while exit_flag != 1:
             hash_history = history.find_catalog(hash_value, number)
             number += 1
             if hash_history is None or (
                     hash_history.filename.endswith('/') and local.find_catalog(hash_history.filename) is None
             ):
-                break
+                exit_flag = 1
         return hash_history
 
-    def find_rename_file(self, history: DirectoryStatus, local: DirectoryStatus, hash_value: str):
+    @staticmethod
+    def find_rename_file(history: DirectoryStatus, local: DirectoryStatus, hash_value: str):
         """
         在历史记录中，找到具有重命名规则的某个文件；
         重命名规则：本地一个文件名，历史不存在，但二者摘要值一样，
@@ -298,12 +301,13 @@ class Synchronize:
         :return: 重命名的子文件或者为空
         """
         number = 1
-        hash_history: DirectoryStatus = None
-        while True:
+        exit_flag = 0
+        hash_history = None
+        while exit_flag != 1:
             hash_history = history.find_catalog(hash_value, number)
             number += 1
             if hash_history is None or (
                     not hash_history.filename.endswith('/') and local.find_catalog(hash_history.filename) is None
             ):
-                break
+                exit_flag = 1
         return hash_history
