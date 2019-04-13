@@ -33,12 +33,12 @@ class Catalog:
 
 class DirectoryStatus(Catalog):
     def __init__(self, filename, child=None):
+        filename += '/' if not filename.endswith('/') else ''
+        super().__init__(filename)
+        self.type = Catalog.IS_FOLDER
         if child is None:
-            super().__init__(filename)
-            self.type = Catalog.IS_FOLDER
             self.child = SortedList([])
         else:
-            super().__init__(filename)
             self.child = child
 
     def insert(self, catalog):
@@ -91,10 +91,8 @@ class FileStatus(Catalog):
     def __init__(self, filename, hash_value=None, mtime=None):
         super().__init__(filename)
         self.type = self.IS_FILE
-        if hash_value is not None:
-            self.hash_value = hash_value
-        if mtime is not None:
-            self.mtime = mtime
+        self.hash_value = hash_value if hash_value is not None else ''
+        self.mtime = mtime if mtime is not None else ''
 
     def copy(self, file_status):
         self.filename = file_status.filename
