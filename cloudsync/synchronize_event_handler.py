@@ -125,7 +125,7 @@ class SynchronizeEventHandler:
         """
         print('Delete local folder: {local_path}'
               .format(local_path=local_path))
-        folder_name = local_path.split('/')[-2]
+        folder_name = local_path.split('/')[-2] + '/'
         dir_child = directory_status.find_catalog(folder_name)
         for filename in os.listdir(local_path):
             if os.path.isdir(filename):
