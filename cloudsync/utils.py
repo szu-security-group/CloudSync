@@ -2,8 +2,7 @@ import os
 import sys
 import hashlib
 from cfs import CloudFileSystem
-from catalog import Catalog, DirectoryStatus, FileStatus
-from directory_form_producer import initialize_metatree_local, initialize_metatree_cloud
+from catalog import Catalog, DirectoryStatus, FileStatus, initialize_metatree_local, initialize_metatree_cloud
 
 # 加密算法 (可选 sha1 | sha256 | sha512)
 hash_type = "sha256"

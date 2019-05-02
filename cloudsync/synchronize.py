@@ -4,11 +4,10 @@ import signal
 
 import utils
 from cos_config import ops_constants
-from catalog import Catalog, DirectoryStatus, FileStatus
+from catalog import Catalog, DirectoryStatus, FileStatus, initialize_metatree_cloud, initialize_metatree_local
 from cfs import CloudFileSystem
 from synchronize_event_emitter import SynchronizeEventEmitter
 from synchronize_event_handler import SynchronizeEventHandler
-from directory_form_producer import initialize_metatree_cloud, initialize_metatree_local
 
 
 class Synchronize:

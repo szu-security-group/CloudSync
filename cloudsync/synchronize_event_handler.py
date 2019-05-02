@@ -3,7 +3,7 @@ import os
 from cfs import CloudFileSystem
 from cos_config import ops_constants
 from synchronize_event_emitter import SynchronizeEventEmitter
-from directory_form_producer import DirectoryStatus, FileStatus
+from catalog import DirectoryStatus, FileStatus
 
 
 class SynchronizeEventHandler:
