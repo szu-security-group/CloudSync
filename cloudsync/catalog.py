@@ -86,45 +86,62 @@ class FileStatus(Catalog):
         )
 
 
-def initialize_metatree_local(local_path: str):
-    root = DirectoryStatus(local_path)
+def initialize_metatree_local(local_path):
+    # 构建该目录的目录状态
+    mtime = file_id = ''
+    try:
+        mtime = str(int(os.path.getmtime(local_path)))
+        file_id = str(os.stat(local_path).st_ino)
+    except Exception as e:
+        print(e)
+    root = DirectoryStatus(local_path, mtime=mtime, file_id=file_id)
+
+    # 遍历目录下的子目录及子文件，并添加到 child 中
     for filename in os.listdir(local_path):
+        filename = local_path + filename
         if os.path.isdir(filename):
             # 插入目录
-            subdir = DirectoryStatus(filename + '/')
-            subdir.mtime = str(int(os.path.getmtime(filename)))
+            filename += '/'
+            subdir = initialize_metatree_local(filename)
             root.insert(subdir)
-            # 递归
-            initialize_metatree_local(local_path + filename + '/')
         elif os.path.isfile(filename):
             # 插入文件
-            file = FileStatus(filename)
-            file.mtime = str(int(os.path.getmtime(filename)))
-            root.insert(file)
+            mtime = ''
+            try:
+                mtime = str(int(os.path.getmtime(filename)))
+            except Exception as e:
+                print(e)
+            subfile = FileStatus(filename, mtime=mtime)
+            root.insert(subfile)
         else:
-            # todo
             print('Unsupported File!')
     return root
 
 
-def initialize_metatree_cloud(cloud_path: str, cloud_list_files_function, cloud_get_mtime_function):
-    root = DirectoryStatus(cloud_path)
+def initialize_metatree_cloud(cloud_path, cfs):
+    # 构建该目录的目录状态
+    mtime = file_id = ''
     try:
-        for filename in cloud_list_files_function(cloud_path):
-            if filename.endswith('/'):
-                # 插入目录
-                subdir = DirectoryStatus(filename)
-                subdir.mtime = cloud_get_mtime_function(cloud_path + filename)
-                root.insert(subdir)
-                # 递归
-                initialize_metatree_cloud(cloud_path + filename, cloud_list_files_function, cloud_get_mtime_function)
-            else:
-                # 插入文件
-                file = FileStatus(filename)
-                file.mtime = cloud_get_mtime_function(cloud_path + filename)
-                root.insert(file)
+        stat = cfs.stat_file(cloud_path)
+        mtime = stat['mtime']
+        file_id = stat['uuid']
     except Exception as e:
-        print('Something happened...')
         print(e)
-    finally:
-        return root
+    root = DirectoryStatus(cloud_path, mtime=mtime, file_id=file_id)
+
+    # 遍历目录下的子目录及子文件，并添加到 child 中
+    for filename in cfs.list_files(cloud_path):
+        if filename.endswith('/'):
+            # 插入目录
+            subdir = initialize_metatree_cloud(cloud_path + filename, cfs)
+            root.insert(subdir)
+        else:
+            # 插入文件
+            mtime = ''
+            try:
+                mtime = cfs.get_mtime(cloud_path + filename)
+            except Exception as e:
+                print(e)
+            subfile = FileStatus(filename, mtime=mtime)
+            root.insert(subfile)
+    return root
