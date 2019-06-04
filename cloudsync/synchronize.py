@@ -275,29 +275,6 @@ class Synchronize:
                                         next_cloud_path)
 
     @staticmethod
-    def find_rename_folder(history: DirectoryStatus, local: DirectoryStatus, hash_value: str):
-        """
-        在历史记录中，找到具有重命名规则的某个目录；
-        重命名规则：本地一个目录名，历史不存在，但二者摘要值一样，
-        而且这个目录不能是其他具有相同内容的目录（例如原目录的副本），必须是真正被重命名的目录；
-        :param history: 历史目录
-        :param local: 本地目录
-        :param hash_value: 消息摘要
-        :return: 重命名的子目录或者为空
-        """
-        number = 1
-        exit_flag = 0
-        hash_history = None
-        while exit_flag != 1:
-            hash_history = history.find_catalog(hash_value, number)
-            number += 1
-            if hash_history is None or (
-                    hash_history.filename.endswith('/') and local.find_catalog(hash_history.filename) is None
-            ):
-                exit_flag = 1
-        return hash_history
-
-    @staticmethod
     def find_rename_file(history: DirectoryStatus, local: DirectoryStatus, hash_value: str):
         """
         在历史记录中，找到具有重命名规则的某个文件；
