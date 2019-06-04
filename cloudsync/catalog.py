@@ -63,23 +63,6 @@ class DirectoryStatus(Catalog):
                         return obj
         return None
 
-    @staticmethod
-    def find_catalog_by_path(path: str, root):
-        paths = path.split('/')
-        for i in range(0, len(paths) - 1):
-            root = root.find_catalog(paths[i] + '/')
-        if path.endswith('/'):
-            return root.find_catalog(paths[len(paths) - 1] + '/')
-        else:
-            return root.find_catalog(paths[len(paths) - 1])
-
-    @staticmethod
-    def find_last_directory_by_path(path, root):
-        paths = path.split('/')
-        for i in range(1, len(paths) - 1):
-            root = root.find_catalog(paths[i] + '/')
-        return root
-
     def __str__(self):
         return '[DirectoryStatus: child={child} filename={filename} hash={hash}'.format(
             child=self.child,
