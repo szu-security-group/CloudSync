@@ -57,26 +57,27 @@ class Synchronize:
         则视为首次运行，历史记录结构为只有根目录的树；历史文件将会直接影响到文件的唯一状态信息。
         :return:
         """
+        # 获取最新树结构
+        self.metatree_cloud = initialize_metatree_cloud(self.cloud_path, self.cfs)
+        self.metatree_local = initialize_metatree_local(self.local_path)
         # 获取历史树结构
+        self.metatree_cloud_history = DirectoryStatus(self.cloud_path)
         if not os.path.exists(self.history_path):
             print('Historical file not found! It will be created later...')
             open(self.history_path, 'w').close()  # create historical file
         if os.path.getsize(self.history_path) > 0:
             try:
                 with open(self.history_path, 'rb') as f:
-                    self.metatree_history: DirectoryStatus = pickle.load(f)
+                    self.metatree_local_history = pickle.load(f)
                 print('Successfully load metatree-history from historical file!')
             except Exception as e:
-                print('Read historical file error!')
                 print(e)
+                print('Read historical file error!')
         else:
-            self.metatree_history = DirectoryStatus('/')
-        # 获取最新树结构
-        self.metatree_cloud = initialize_metatree_cloud(self.cloud_path, self.cfs.list_files, self.cfs.get_mtime)
-        self.metatree_local = initialize_metatree_local(self.local_path)
+            self.metatree_local_history = DirectoryStatus(self.local_path)
         # 计算最新树摘要
-        utils.get_entire_cloud_directory_hash(self.cloud_path, self.cfs.get_hash, self.metatree_cloud)
-        utils.get_entire_local_directory_hash(self.local_path, self.metatree_local)
+        utils.get_entire_cloud_directory_hash(self.metatree_cloud, self.cfs)
+        utils.get_entire_local_directory_hash(self.metatree_local)
 
     def synchronize(self):
         """
@@ -98,13 +99,15 @@ class Synchronize:
         得到最新的目录结构，并计算节点摘要值，对比本地和云端的是否一致
         :return: Boolean
         """
+        # 将当前的树结构保存到历史
+        self.metatree_cloud_history = self.metatree_cloud
+        self.metatree_local_history = self.metatree_local
         # 获取最新树结构
-        self.metatree_cloud = initialize_metatree_cloud(self.cloud_path, self.cfs.list_files, self.cfs.get_mtime)
+        self.metatree_cloud = initialize_metatree_cloud(self.cloud_path, self.cfs)
         self.metatree_local = initialize_metatree_local(self.local_path)
         # 计算树的摘要
-        utils.get_entire_cloud_directory_hash(self.cloud_path, self.cfs.get_hash, self.metatree_cloud)
-        utils.get_entire_local_directory_hash(self.local_path, self.metatree_local)
-        utils.get_entire_directory(self.metatree_history)
+        utils.get_entire_cloud_directory_hash(self.metatree_cloud, self.cfs)
+        utils.get_entire_local_directory_hash(self.metatree_local)
         # 验证本地和云端的目录是否一致
         return self.metatree_cloud.hash_value == self.metatree_local.hash_value
 
@@ -115,20 +118,20 @@ class Synchronize:
         """
         try:
             with open(self.history_path, 'wb') as f:
-                pickle.dump(self.metatree_history, f)
+                pickle.dump(self.metatree_local_history, f)
         except Exception as e:
             print(e)
 
-    def algorithm_push(self, history: DirectoryStatus, local: DirectoryStatus, cloud: DirectoryStatus,
-                       cloud_path: str, local_path: str):
+    def algorithm_push(self, cloud, cloud_history, local, local_history, cloud_path, local_path):
         """
         历查找本地目录 metaTreeLocal ，对比历史记录和云端目录
         找出不一致的项，识别不一致的原因，并将任务提交给任务管理对象进行处理，任务包括：
-        1. 创建云目录 2. 删除本地目录 3. 重命名云目录
-        4. 删除本地文件 5. 重命名云文件 6. 上传文件 7. 更新云文件
-        :param history: 历史记录
-        :param local: 本地目录
-        :param cloud: 云目录
+        1. 创建云端目录 2. 重命名云端目录 3. 删除本地目录
+        4. 删除本地文件 5. 重命名云端文件 6. 上传文件 7. 更新云端文件
+        :param cloud: 云端元信息树
+        :param cloud_history: 云端历史元信息树
+        :param local: 本地元信息树
+        :param local_history: 本地历史元信息树
         :param cloud_path: 云路径
         :param local_path: 本地路径
         :return:
@@ -136,66 +139,75 @@ class Synchronize:
         for catalog_local in local.child:
             filename = catalog_local.filename
             hash_value = catalog_local.hash_value
-            name_history = history.find_catalog(filename)
-            name_cloud = cloud.find_catalog(filename)
-            next_local_path = local_path + filename
-            next_cloud_path = cloud_path + filename
-            if catalog_local.type == Catalog.IS_FOLDER:
-                # 在历史记录中，尝试利用摘要查找信息
-                hash_history = self.find_rename_folder(history, local, hash_value)
-                if name_history is None and hash_history is None:
-                    # 在历史记录中无法根据名字以及摘要找到相应记录，上传此云目录
-                    self.tasks.set_data(history, ops_constants['CREATE_CLOUD_FOLDER'],
-                                        next_local_path, next_cloud_path)
-                elif name_history is None \
-                        and hash_history is not None \
-                        and catalog_local.mtime > hash_history.mtime:
-                    # 历史记录中不存在此目录名，但存在相同摘要，且本地最新，重命名此云目录
-                    self.tasks.set_data(hash_history, ops_constants['RENAME_CLOUD_FOLDER'],
-                                        cloud_path + hash_history.filename, next_cloud_path)
-                elif name_history is not None and name_cloud is None:
-                    # 在历史纪录中存在，但在云端不存在，说明云端删除了此目录，则删除这个本地目录
-                    self.tasks.set_data(history, ops_constants['DELETE_LOCAL_FOLDER'],
-                                        next_local_path)
+            next_local_path = local_path + filename[len(local_path):]
+            next_cloud_path = cloud_path + filename[len(local_path):]
+            catalog_local_history = local_history.find_catalog(next_local_path) if local_history is not None else None
+            catalog_cloud = cloud.find_catalog(next_cloud_path) if cloud is not None else None
+            catalog_cloud_history = cloud_history.find_catalog(next_cloud_path) if cloud_history is not None else None
+            if catalog_local.file_type == Catalog.IS_FOLDER:
+                # 尝试在本地历史中利用文件的 inode 或 UUID 查找信息
+                file_id_local_history = self.metatree_local_history.find_catalog(catalog_local.file_id)
+                if catalog_cloud_history is not None:
+                    file_id_cloud = self.metatree_cloud.find_catalog(catalog_cloud_history.file_id)
                 else:
-                    self.algorithm_push(history.find_catalog(filename), catalog_local, cloud.find_catalog(filename),
+                    file_id_cloud = None
+
+                # 在云端存在且散列值相同，说明文件夹没变，跳过
+                if catalog_cloud is not None and catalog_cloud.hash_value == hash_value:
+                    continue
+                # 在云端存在但散列值不相同，说明文件夹里面有修改，递归进去处理
+                if catalog_cloud is not None and catalog_cloud.hash_value != hash_value:
+                    self.algorithm_push(catalog_cloud, catalog_cloud_history,
+                                        catalog_local, catalog_local_history,
                                         next_cloud_path, next_local_path)
-            elif catalog_local.type == Catalog.IS_FILE:
+                # 在云端不存在，但在云端历史（和本地历史）中存在，说明云端删除了此目录，则删除这个本地目录
+                if catalog_cloud is None and catalog_cloud_history is not None and file_id_cloud is None:
+                    self.tasks.set_data(ops_constants['DELETE_LOCAL_FOLDER'],
+                                        next_local_path)
+                # 在云端、云端历史、本地历史都找不到记录，上传此云目录
+                if catalog_cloud is None and catalog_cloud_history is None and file_id_local_history is None:
+                    self.tasks.set_data(ops_constants['CREATE_CLOUD_FOLDER'],
+                                        next_local_path, next_cloud_path)
+                # 在云端、云端历史找不到记录，但在本地历史中有记录，重命名此云目录
+                if catalog_cloud is None and catalog_cloud_history is None and file_id_local_history is not None:
+                    self.tasks.set_data(ops_constants['RENAME_CLOUD_FOLDER'],
+                                        cloud_path + file_id_local_history.filename[len(local_path):], next_cloud_path)
+            elif catalog_local.file_type == Catalog.IS_FILE:
                 # 在历史记录中，尝试利用摘要查找信息
-                hash_history = self.find_rename_file(history, local, hash_value)
-                if name_history is None and hash_history is None:
+                file_id_local_history = self.find_rename_file(local_history, local, hash_value)
+                if catalog_local_history is None and file_id_local_history is None:
                     # 在历史记录，名字和摘要都不存在，上传新文件
-                    self.tasks.set_data(history, ops_constants['UPLOAD_FILE'],
+                    self.tasks.set_data(ops_constants['UPLOAD_FILE'],
                                         next_local_path, next_cloud_path)
-                elif name_history is None \
-                        and hash_history is not None \
-                        and catalog_local.mtime > hash_history.mtime:
+                elif catalog_local_history is None \
+                        and file_id_local_history is not None \
+                        and catalog_local.mtime > file_id_local_history.mtime:
                     # 历史记录中不存在此目录名，但存在相同摘要，且本地最新，则重命名云端文件
-                    self.tasks.set_data(hash_history, ops_constants['RENAME_CLOUD_FILE'],
-                                        cloud_path + hash_history.filename, next_cloud_path)
-                elif name_history is not None \
-                        and name_history.hash_value != catalog_local.hash_value \
-                        and catalog_local.mtime > name_history.mtime:
+                    self.tasks.set_data(ops_constants['RENAME_CLOUD_FILE'],
+                                        cloud_path + file_id_local_history.filename, next_cloud_path)
+                elif catalog_local_history is not None \
+                        and catalog_local_history.hash_value != catalog_local.hash_value \
+                        and catalog_local.mtime > catalog_local_history.mtime:
                     # 历史记录中存在此文件名，此历史文件与本地文件摘要值不相同，且本地最新，则更新云端文件
-                    self.tasks.set_data(name_history, ops_constants['UPDATE_CLOUD_FILE'],
+                    self.tasks.set_data(ops_constants['UPDATE_CLOUD_FILE'],
                                         next_local_path, next_cloud_path)
-                elif name_history is not None \
-                        and name_history.hash_value == catalog_local.hash_value \
-                        and name_cloud is None:
+                elif catalog_local_history is not None \
+                        and catalog_local_history.hash_value == catalog_local.hash_value \
+                        and catalog_cloud is None:
                     # 历史记录中此文件名与摘要都与本地一致, 但在云端找不到此文件，删除此本地文件
-                    self.tasks.set_data(history, ops_constants['DELETE_LOCAL_FILE'],
+                    self.tasks.set_data(ops_constants['DELETE_LOCAL_FILE'],
                                         next_local_path)
 
-    def algorithm_pull(self, history: DirectoryStatus, local: DirectoryStatus, cloud: DirectoryStatus,
-                       cloud_path: str, local_path: str):
+    def algorithm_pull(self, cloud, cloud_history, local, local_history, cloud_path, local_path):
         """
         遍历查找本地目录 metaTreeCloud ，对比历史记录和本地目录
         找出不一致的项，识别不一致的原因，并将任务提交给任务管理对象进行处理，任务包括：
-        1. 创建本地目录 2. 删除云端目录 3.重命名本地目录
-        4. 删除云文件 5. 重命名本地文件 6. 下载文件 7. 更新本地文件
-        :param history: 历史记录
-        :param local: 本地目录
-        :param cloud: 云目录
+        1. 创建本地目录 2. 重命名本地目录 3. 删除云端目录
+        4. 删除云端文件 5. 重命名本地文件 6. 下载文件 7. 更新本地文件
+        :param cloud: 云端元信息树
+        :param cloud_history: 云端历史元信息树
+        :param local: 本地元信息树
+        :param local_history: 本地历史元信息树
         :param cloud_path: 云路径
         :param local_path: 本地路径
         :return:
@@ -203,54 +215,63 @@ class Synchronize:
         for catalog_cloud in cloud.child:
             filename = catalog_cloud.filename
             hash_value = catalog_cloud.hash_value
-            name_history = history.find_catalog(filename)
-            name_local = local.find_catalog(filename)
-            next_local_path = local_path + filename
-            next_cloud_path = cloud_path + filename
-            if catalog_cloud.type == Catalog.IS_FOLDER:
-                # 在历史记录中，尝试利用摘要查找信息
-                hash_history = self.find_rename_folder(history, cloud, hash_value)
-                if name_history is None and hash_history is None:
-                    # 在历史记录中无法根据名字以及摘要找到相应记录，下载此目录
-                    self.tasks.set_data(history, ops_constants['CREATE_LOCAL_FOLDER'],
-                                        next_cloud_path, next_local_path)
-                elif name_history is None \
-                        and hash_history is not None \
-                        and catalog_cloud.mtime > hash_history.mtime:
-                    # 历史记录中不存在此目录名，但存在相同摘要，且云端最新，重命名本地目录
-                    self.tasks.set_data(hash_history, ops_constants['RENAME_LOCAL_FOLDER'],
-                                        local_path + hash_history.filename, next_local_path)
-                elif name_history is not None and name_local is None:
-                    # 在历史纪录中存在，但在本地不存在，说明本地删除了此目录，则删除这个云端目录
-                    self.tasks.set_data(history, ops_constants['DELETE_CLOUD_FOLDER'],
-                                        next_cloud_path)
+            next_local_path = local_path + filename[len(cloud_path):]
+            next_cloud_path = cloud_path + filename[len(cloud_path):]
+            catalog_cloud_history = cloud_history.find_catalog(next_cloud_path) if cloud_history is not None else None
+            catalog_local = local.find_catalog(next_local_path) if local is not None else None
+            catalog_local_history = local_history.find_catalog(next_local_path) if local_history is not None else None
+            if catalog_cloud.file_type == Catalog.IS_FOLDER:
+                # 尝试在云端历史中利用文件的 inode 或 UUID 查找信息
+                file_id_cloud_history = self.metatree_cloud_history.find_catalog(catalog_cloud.file_id)
+                if catalog_local_history is not None:
+                    file_id_local = self.metatree_local.find_catalog(catalog_local_history.file_id)
                 else:
-                    self.algorithm_pull(history.find_catalog(filename), local.find_catalog(filename), catalog_cloud,
+                    file_id_local = None
+
+                # 在本地存在且散列值相同，说明文件夹没变，跳过
+                if catalog_local is not None and catalog_local.hash_value == hash_value:
+                    continue
+                # 在本地存在但散列值不相同，说明文件夹里面有修改，递归进去处理
+                if catalog_local is not None and catalog_local.hash_value != hash_value:
+                    self.algorithm_pull(catalog_cloud, catalog_cloud_history,
+                                        catalog_local, catalog_local_history,
                                         next_cloud_path, next_local_path)
-            elif catalog_cloud.type == Catalog.IS_FILE:
+                # 在本地不存在，但在本地历史（和云端历史）中存在，说明本地删除了此目录，则删除这个云端目录
+                if catalog_local is None and catalog_local_history is not None and file_id_local is None:
+                    self.tasks.set_data(ops_constants['DELETE_CLOUD_FOLDER'],
+                                        next_cloud_path)
+                # 在本地、本地历史、云端历史都找不到记录，创建此本地目录
+                if catalog_local is None and catalog_local_history is None and file_id_cloud_history is None:
+                    self.tasks.set_data(ops_constants['CREATE_LOCAL_FOLDER'],
+                                        next_cloud_path, next_local_path)
+                # 在本地、本地历史找不到记录，但在云端历史中有记录，重命名此本地目录
+                if catalog_local is None and catalog_local_history is None and file_id_cloud_history is not None:
+                    self.tasks.set_data(ops_constants['RENAME_LOCAL_FOLDER'],
+                                        local_path + file_id_cloud_history.filename[len(cloud_path):], next_local_path)
+            elif catalog_cloud.file_type == Catalog.IS_FILE:
                 # 在历史记录中，尝试利用摘要查找信息
-                hash_history = self.find_rename_file(history, cloud, hash_value)
-                if name_history is None and hash_history is None:
+                hash_history = self.find_rename_file(local_history, cloud, hash_value)
+                if catalog_local_history is None and hash_history is None:
                     # 在历史记录，名字和摘要都不存在，下载新文件
-                    self.tasks.set_data(history, ops_constants['DOWNLOAD_FILE'],
+                    self.tasks.set_data(ops_constants['DOWNLOAD_FILE'],
                                         next_cloud_path, next_local_path)
-                elif name_history is None \
+                elif catalog_local_history is None \
                         and hash_history is not None \
                         and catalog_cloud.mtime > hash_history.mtime:
                     # 历史记录中不存在此目录名，但存在相同摘要，则且云端最新，则重命名本地文件
-                    self.tasks.set_data(hash_history, ops_constants['RENAME_LOCAL_FILE'],
+                    self.tasks.set_data(ops_constants['RENAME_LOCAL_FILE'],
                                         local_path + hash_history.filename, next_local_path)
-                elif name_history is not None \
-                        and name_history.hash_value != catalog_cloud.hash_value \
-                        and catalog_cloud.mtime > name_history.mtime:
+                elif catalog_local_history is not None \
+                        and catalog_local_history.hash_value != catalog_cloud.hash_value \
+                        and catalog_cloud.mtime > catalog_local_history.mtime:
                     # 历史记录中存在此文件名，此历史文件与本地文件摘要值不相同，且云端最新，则更新本地文件
-                    self.tasks.set_data(name_history, ops_constants['UPDATE_LOCAL_FILE'],
+                    self.tasks.set_data(ops_constants['UPDATE_LOCAL_FILE'],
                                         next_cloud_path, next_local_path)
-                elif name_history is not None \
-                        and name_history.hash_value == catalog_cloud.hash_value \
-                        and name_local is None:
+                elif catalog_local_history is not None \
+                        and catalog_local_history.hash_value == catalog_cloud.hash_value \
+                        and catalog_local is None:
                     # 历史记录中此文件名与摘要都一致，但在本地找不到此文件，删除此云端文件
-                    self.tasks.set_data(history, ops_constants['DELETE_CLOUD_FILE'],
+                    self.tasks.set_data(ops_constants['DELETE_CLOUD_FILE'],
                                         next_cloud_path)
 
     @staticmethod
