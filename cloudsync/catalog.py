@@ -49,21 +49,21 @@ class DirectoryStatus(Catalog):
         if catalog not in self.child:
             self.child.add(catalog)
 
-    def remove(self, object_):
-        if isinstance(object_, str):
-            for obj in self.child.__iter__():
-                if obj.filename == str(object_):
-                    self.child.remove(obj)
-        if isinstance(object_, Catalog):
-            self.child.remove(object_)
+    def remove(self, filename):
+        if isinstance(filename, Catalog):
+            filename = filename.filename
+        filename = str(filename)
+        for catalog in self.child.__iter__():
+            if catalog.filename == filename:
+                self.child.remove(catalog)
 
-    def find_catalog(self, object_, number=1):
-        if isinstance(object_, str):
-            for obj in self.child.__iter__():
-                if obj.filename == str(object_) or obj.hash_value == str(object_):
-                    number -= 1
-                    if number == 0:
-                        return obj
+    def find_catalog(self, obj, number=1):
+        obj = str(obj)
+        for catalog in self.child.__iter__():
+            if obj in [catalog.filename, catalog.hash_value, catalog.file_id]:
+                number -= 1
+            if number == 0:
+                return catalog
         return None
 
     def __str__(self):
