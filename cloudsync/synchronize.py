@@ -83,11 +83,13 @@ class Synchronize:
         同步本地和云端指定的目录 包括算法 AlgorithmPUSH | AlgorithmPULL
         :return:
         """
-        self.algorithm_push(self.metatree_history, self.metatree_local, self.metatree_cloud,
+        self.algorithm_pull(self.metatree_cloud, self.metatree_cloud_history,
+                            self.metatree_local, self.metatree_local_history,
                             self.cloud_path, self.local_path)
-        if self.update_and_validate():
-            return
-        self.algorithm_pull(self.metatree_history, self.metatree_local, self.metatree_cloud,
+        # if self.update_and_validate():
+        #     return
+        self.algorithm_push(self.metatree_cloud, self.metatree_cloud_history,
+                            self.metatree_local, self.metatree_local_history,
                             self.cloud_path, self.local_path)
 
     def update_and_validate(self):
