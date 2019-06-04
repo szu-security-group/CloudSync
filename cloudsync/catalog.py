@@ -1,4 +1,5 @@
 import os
+import time
 from sortedcontainers import SortedList
 
 
@@ -9,15 +10,21 @@ class Catalog:
 
     # 文件目录名
     filename = ''
+    # 文件目录标志
+    file_type = 0
     # 文件哈希值
     hash_value = ''
     # 文件修改时间
     mtime = ''
-    # 文件目录标志
-    type = 0
+    # 文件的 inode 或 UUID
+    file_id = ''
 
-    def __init__(self, filename):
+    def __init__(self, filename, file_type, hash_value, mtime, file_id):
         self.filename = filename
+        self.file_type = file_type
+        self.hash_value = hash_value if hash_value is not None else ''
+        self.mtime = mtime if mtime is not None else ''
+        self.file_id = file_id if file_id is not None else ''
 
     def __eq__(self, other):
         return self.filename == str(other.filename)
@@ -28,19 +35,15 @@ class Catalog:
     def __str__(self):
         return '[Catalog: filename={filename} hash={hash}]'.format(
             filename=self.filename,
-            hash=self.hash_value
+            hash=self.hash_value[6:]
         )
 
 
 class DirectoryStatus(Catalog):
-    def __init__(self, filename, child=None):
+    def __init__(self, filename, hash_value=None, mtime=None, file_id=None, child=None):
         filename += '/' if not filename.endswith('/') else ''
-        super().__init__(filename)
-        self.type = Catalog.IS_FOLDER
-        if child is None:
-            self.child = SortedList([])
-        else:
-            self.child = child
+        super().__init__(filename, Catalog.IS_FOLDER, hash_value, mtime, file_id)
+        self.child = child if child is not None else SortedList([])
 
     def insert(self, catalog):
         if catalog not in self.child:
@@ -64,30 +67,22 @@ class DirectoryStatus(Catalog):
         return None
 
     def __str__(self):
-        return '[DirectoryStatus: child={child} filename={filename} hash={hash}'.format(
-            child=self.child,
+        return '[DirectoryStatus: filename={filename} file_id={file_id} hash={hash}]'.format(
             filename=self.filename,
-            hash=self.hash_value
+            file_id=self.file_id,
+            hash=self.hash_value[6:]
         )
 
 
 class FileStatus(Catalog):
-    def __init__(self, filename, hash_value=None, mtime=None):
-        super().__init__(filename)
-        self.type = self.IS_FILE
-        self.hash_value = hash_value if hash_value is not None else ''
-        self.mtime = mtime if mtime is not None else ''
-
-    def copy(self, file_status):
-        self.filename = file_status.filename
-        self.hash_value = file_status.hash_value
-        self.mtime = file_status.mtime
+    def __init__(self, filename, hash_value=None, mtime=None, file_id=None):
+        super().__init__(filename, Catalog.IS_FILE, hash_value, mtime, file_id)
 
     def __str__(self):
-        return '[FileStatus: filename={filename} hash={hash} mtime={mtime}'.format(
+        return '[FileStatus: filename={filename} mtime={mtime} hash={hash}]'.format(
             filename=self.filename,
-            hash=self.hash_value,
-            mtime=self.mtime
+            mtime=time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(self.mtime))),
+            hash=self.hash_value[6:]
         )
 
 
