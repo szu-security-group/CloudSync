@@ -1,4 +1,3 @@
-from catalog import DirectoryStatus, FileStatus
 from cos_config import ops_constants
 
 
@@ -8,14 +7,11 @@ class SynchronizeEventEmitter:
     存储任务需要的信息，以及通知相应任务
     作为可观察者 Observable
     """
-    task_index = 0
-    from_path: str = ''
-    to_path: str = ''
-    stat_file: FileStatus = ''
-    directory_list: DirectoryStatus = ''
-
     def __init__(self):
         self._observers = []
+        self.task_index = 0
+        self.from_path = ''
+        self.to_path = ''
 
     def register(self, observer):
         if observer not in self._observers:
