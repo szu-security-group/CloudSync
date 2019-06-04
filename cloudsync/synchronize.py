@@ -11,22 +11,18 @@ from synchronize_event_handler import SynchronizeEventHandler
 
 
 class Synchronize:
-    close = True
-    history_path = ''
-    local_path = ''
-    cloud_path = ''
-    metatree_history: DirectoryStatus = ''
-    metatree_local: DirectoryStatus = ''
-    metatree_cloud: DirectoryStatus = ''
-    cfs = ''
-    tasks = ''
-
     def __init__(self, cfs: CloudFileSystem):
         self.cfs = cfs
         self.history_path = cfs.config['history_path']
         self.local_path = cfs.config['local_path']
         self.cloud_path = cfs.config['cloud_path']
         self.tasks = SynchronizeEventEmitter()
+        self.metatree_cloud = None
+        self.metatree_cloud_history = None
+        self.metatree_local = None
+        self.metatree_local_history = None
+        self.close = True
+
         self.tasks.register(SynchronizeEventHandler(self.cfs))
         # 将工作目录切换成 local_path
         os.chdir(self.local_path)
