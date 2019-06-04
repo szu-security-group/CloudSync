@@ -1,5 +1,6 @@
 import time
 import oss2
+from uuid import uuid1 as uuid
 
 import utils
 
@@ -36,12 +37,23 @@ class CloudFileSystem:
         if local_path.endswith('/'):
             response = self.create_folder(cloud_path)
         else:
+            # get file metadata
+            file_hash = ''
+            try:
+                file_hash = utils.get_local_file_hash(local_path)
+            except Exception as e:
+                print(e)
+            file_mtime = str(int(time.time()))
+            file_id = str(uuid())
+
+            # upload file
             with open(local_path, 'rb') as f:
                 response = self._client.put_object(key=cloud_path,
                                                    data=f,
                                                    headers={
-                                                       'x-oss-meta-mtime': str(int(time.time())),
-                                                       'x-oss-meta-hash': utils.get_local_file_hash(local_path)
+                                                       'x-oss-meta-hash': file_hash,
+                                                       'x-oss-meta-mtime': file_mtime,
+                                                       'x-oss-meta-uuid': file_id
                                                    })
         return response
 
@@ -58,13 +70,6 @@ class CloudFileSystem:
         # 写入本地文件
         with open(local_path, 'wb') as f:
             shutil.copyfileobj(response, f)
-        '''
-        专心做好下载吧，搞什么附加 hash
-        
-        # 若云端文件没有附加属性摘要 hash ，计算后附加上去
-        if 'x-oss-meta-hash' not in response.headers:
-            self.set_hash(cloud_path, utils.get_local_file_hash(local_path))
-        '''
         return response
 
     def delete(self, cloud_path):
@@ -87,13 +92,26 @@ class CloudFileSystem:
         import os
         if cloud_path.endswith('/') or not self._client.object_exists(key=cloud_path):
             return
+
+        # get file metadata
+        file_size = file_hash = ''
+        try:
+            file_size = str(os.path.getsize(local_path))
+            file_hash = utils.get_local_file_hash(local_path)
+        except Exception as e:
+            print(e)
+        file_mtime = str(int(time.time()))
+        file_id = self.stat_file(cloud_path)['uuid']
+
+        # upload file
         with open(local_path, 'rb') as f:
             response = self._client.put_object(key=cloud_path,
                                                data=f,
                                                headers={
-                                                   'Content-Length': str(os.path.getsize(local_path)),
-                                                   'x-oss-meta-mtime': str(int(time.time())),
-                                                   'x-oss-meta-hash': utils.get_local_file_hash(local_path)
+                                                   'Content-Length': file_size,
+                                                   'x-oss-meta-hash': file_hash,
+                                                   'x-oss-meta-mtime': file_mtime,
+                                                   'x-oss-meta-uuid': file_id
                                                })
         return response
 
@@ -131,25 +149,21 @@ class CloudFileSystem:
         # cloud_path 结尾若不是 / , 上传之后不会表现为文件夹
         if not cloud_path.endswith('/'):
             cloud_path += '/'
+
+        # get file metadata
+        file_hash = utils.get_buffer_hash(b'')
+        file_mtime = str(int(time.time()))
+        file_id = str(uuid())
+
+        # create folder
         response = self._client.put_object(key=cloud_path,
                                            data=b'',
                                            headers={
-                                               'x-oss-meta-mtime': str(int(time.time()))
+                                               'x-oss-meta-hash': file_hash,
+                                               'x-oss-meta-mtime': file_mtime,
+                                               'x-oss-meta-uuid': file_id
                                            })
         return response
-
-    def stat_file(self, cloud_path):
-        """
-        查询文件属性
-        要求返回值中，key 至少包括 hash、mtime
-        :param cloud_path:
-        :return:
-        """
-        metadata = self._client.head_object(key=cloud_path)
-        return {
-            'hash': metadata.headers.get('x-oss-meta-hash', self.get_hash(cloud_path)),
-            'mtime': metadata.headers.get('x-oss-meta-mtime', self.get_mtime(cloud_path))
-        }
 
     def list_files(self, cloud_path):
         """
@@ -167,6 +181,61 @@ class CloudFileSystem:
         files += [item.key.split('/')[-1] for item in items if not item.key.endswith('/')]
         return files
 
+    def stat_file(self, cloud_path):
+        """
+        查询文件属性
+        要求返回值中，key 至少包括 hash、mtime、uuid
+        :param cloud_path:
+        :return:
+        """
+        set_stat_flag = False
+        metadata = self._client.head_object(key=cloud_path)
+        # get hash
+        if 'x-oss-meta-hash' in metadata.headers:
+            hash_value = metadata.headers['x-oss-meta-hash']
+        else:
+            hash_value = utils.get_cloud_file_hash(cloud_path, self)
+            set_stat_flag = True
+        # get mtime
+        if 'x-oss-meta-mtime' in metadata.headers:
+            mtime = metadata.headers['x-oss-meta-mtime']
+        else:
+            mtime = str(int(time.time()))
+            set_stat_flag = True
+        # get uuid
+        if 'x-oss-meta-uuid' in metadata.headers:
+            file_id = metadata.headers['x-oss-meta-uuid']
+        else:
+            file_id = str(uuid())
+            set_stat_flag = True
+
+        stat = {
+            'hash': hash_value,
+            'mtime': mtime,
+            'uuid': file_id
+        }
+        if set_stat_flag:
+            self.set_stat(cloud_path, stat)
+        return stat
+
+    def set_stat(self, cloud_path, stat):
+        """
+        修改文件属性
+        :param cloud_path: 云端文件路径
+        :param stat: 文件熟悉
+        :return:
+        """
+        metadata = {
+            'x-oss-meta-hash': stat['hash'],
+            'x-oss-meta-mtime': stat['mtime'],
+            'x-oss-meta-uuid': stat['uuid'],
+        }
+        response = self._client.copy_object(source_bucket_name=self._bucket_name,
+                                            source_key=cloud_path,
+                                            target_key=cloud_path,
+                                            headers=metadata)
+        return response
+
     def set_hash(self, cloud_path, hash_value):
         """
         设置文件摘要 hash
@@ -174,13 +243,9 @@ class CloudFileSystem:
         :param hash_value:
         :return:
         """
-        metadata = self._client.head_object(key=cloud_path)
-        metadata = {key: metadata.headers[key] for key in metadata.headers if key.startswith('x-oss-meta-')}
-        metadata['x-oss-meta-hash'] = str(hash_value)
-        response = self._client.copy_object(source_bucket_name=self._bucket_name,
-                                            source_key=cloud_path,
-                                            target_key=cloud_path,
-                                            headers=metadata)
+        stat = self.stat_file(cloud_path)
+        stat['hash'] = hash_value
+        response = self.set_stat(cloud_path, stat)
         return response
 
     def get_hash(self, cloud_path):
@@ -190,13 +255,7 @@ class CloudFileSystem:
         :param cloud_path:
         :return:
         """
-        metadata = self._client.head_object(key=cloud_path)
-        if 'x-oss-meta-hash' in metadata.headers:
-            hash_value = metadata.headers['x-oss-meta-hash']
-        else:
-            hash_value = utils.get_cloud_file_hash(cloud_path, self)
-            self.set_hash(cloud_path, hash_value)
-        return hash_value
+        return self.stat_file(cloud_path)['hash']
 
     def set_mtime(self, cloud_path, mtime):
         """
@@ -205,13 +264,9 @@ class CloudFileSystem:
         :param mtime:
         :return:
         """
-        metadata = self._client.head_object(key=cloud_path)
-        metadata = {key: metadata.headers[key] for key in metadata.headers if key.startswith('x-oss-meta-')}
-        metadata['x-oss-meta-mtime'] = str(mtime)
-        response = self._client.copy_object(source_bucket_name=self._bucket_name,
-                                            source_key=cloud_path,
-                                            target_key=cloud_path,
-                                            headers=metadata)
+        stat = self.stat_file(cloud_path)
+        stat['mtime'] = mtime
+        response = self.set_stat(cloud_path, stat)
         return response
 
     def get_mtime(self, cloud_path):
@@ -221,10 +276,4 @@ class CloudFileSystem:
         :param cloud_path:
         :return:
         """
-        metadata = self._client.head_object(key=cloud_path)
-        if 'x-oss-meta-mtime' in metadata.headers:
-            mtime = metadata.headers['x-oss-meta-mtime']
-        else:
-            mtime = str(int(time.time()))
-            self.set_mtime(cloud_path, mtime)
-        return mtime
+        return self.stat_file(cloud_path)['mtime']
