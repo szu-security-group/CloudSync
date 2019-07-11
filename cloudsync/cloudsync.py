@@ -1,4 +1,5 @@
 import sys
+import logging
 
 from cfs import CloudFileSystem
 from synchronize import Synchronize
@@ -31,6 +32,26 @@ options:
 
 
 if __name__ == '__main__':
+    # 初始化 logging
+    # 获取 root logger
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.DEBUG)  # log 等级总开关
+    # 定义 log 的输出格式
+    formatter = logging.Formatter('%(asctime)s [%(levelname)s] '
+                                  '%(filename)s -> %(name)s(line:%(lineno)d): %(message)s')
+    # 创建一个用于写入日志文件的 handler
+    file_handler = logging.FileHandler('cloudsync.log', encoding='utf-8')
+    file_handler.setLevel(logging.WARNING)  # 输出到 file 的 log 等级的开关
+    file_handler.setFormatter(formatter)
+    # 创建一个用于输出到控制台的 handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.DEBUG)  # 输出到 console 的 log 等级的开关
+    console_handler.setFormatter(formatter)
+    # 将 handler 添加到 root handler
+    root_logger.addHandler(file_handler)
+    root_logger.addHandler(console_handler)
+
+    # 解析参数
     if len(sys.argv) == 3 and sys.argv[1] in ['-s', '--sync'] and sys.argv[2] in ['tencent', 'ali']:
         print('Start sync with {csp}...'.format(csp=sys.argv[2]))
         start_sync(csp=sys.argv[2])
