@@ -1,6 +1,8 @@
 import os
 import pickle
 import signal
+import logging
+import inspect
 
 import utils
 from cos_config import ops_constants
@@ -12,10 +14,17 @@ from synchronize_event_handler import SynchronizeEventHandler
 
 class Synchronize:
     def __init__(self, cfs: CloudFileSystem):
+        logger = logging.getLogger('{class_name} -> {function_name}'
+                                   .format(class_name=self.__class__.__name__,
+                                           function_name=inspect.stack()[0].function))
         self.cfs = cfs
         self.history_path = cfs.config['history_path']
         self.local_path = cfs.config['local_path']
         self.cloud_path = cfs.config['cloud_path']
+        logger.debug('history_path 的值为 {history_path}'.format(history_path=self.history_path))
+        logger.debug('local_path 的值为 {local_path}'.format(local_path=self.local_path))
+        logger.debug('cloud_path 的值为 {cloud_path}'.format(cloud_path=self.cloud_path))
+
         self.tasks = SynchronizeEventEmitter()
         self.metatree_cloud = None
         self.metatree_cloud_history = None
@@ -26,6 +35,7 @@ class Synchronize:
         self.tasks.register(SynchronizeEventHandler(self.cfs))
         # 将工作目录切换成 local_path
         os.chdir(self.local_path)
+        logger.info('工作目录切换到 {work_dir}'.format(work_dir=self.local_path))
         # 按下 Ctrl+C 之后停止同步程序
         signal.signal(signal.SIGINT, self.stop)
 
@@ -35,6 +45,10 @@ class Synchronize:
         可通过自定义输入提示关闭此同步功能
         :return:
         """
+        logger = logging.getLogger('{class_name} -> {function_name}'
+                                   .format(class_name=self.__class__.__name__,
+                                           function_name=inspect.stack()[0].function))
+        logger.info('云同步系统启动')
         self.close = False
         before = after = False
         self.initialize()
@@ -43,13 +57,20 @@ class Synchronize:
             self.synchronize()
             before = after
             after = self.update_and_validate()
+            logger.debug('before 的值为 {before}, after 的值为 {after}'.format(before=before, after=after))
             if before != after and after is True:
                 print('同步成功')
+                logger.info('同步成功')
                 self.save_history()
         print('同步关闭')
+        logger.info('云同步系统关闭')
 
     def stop(self, sig, frame):
+        logger = logging.getLogger('{class_name} -> {function_name}'
+                                   .format(class_name=self.__class__.__name__,
+                                           function_name=inspect.stack()[0].function))
         self.close = True
+        logger.debug('云同步系统关闭标志设置为 True')
 
     def initialize(self):
         """
