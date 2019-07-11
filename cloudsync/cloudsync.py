@@ -1,5 +1,6 @@
 import sys
 import logging
+import inspect
 
 from cfs import CloudFileSystem
 from synchronize import Synchronize
@@ -11,18 +12,23 @@ def start_sync(csp):
     :param csp: COS Service Provider
     :return: None
     """
+    logger = logging.getLogger(inspect.stack()[0].function)
+    logger.info('COS 服务提供商为 {csp}'.format(csp=csp))
+    logger.info('开始与 {csp} 进行同步...'.format(csp=sys.argv[2]))
     if csp == 'tencent':
         cfs = CloudFileSystem('tencent')
     elif csp == 'ali':
         cfs = CloudFileSystem('ali')
     else:
-        print("Unknown COS Service Provider!")
+        logger.error("未知的 COS 服务提供商!")
         return
 
     Synchronize(cfs).start()
 
 
 def print_help():
+    logger = logging.getLogger(inspect.stack()[0].function)
+    logger.info('输出帮助文档')
     print('''\
 usage: python3 cloudsync.py [OPTION] ...
 options:
@@ -52,8 +58,7 @@ if __name__ == '__main__':
     root_logger.addHandler(console_handler)
 
     # 解析参数
-    if len(sys.argv) == 3 and sys.argv[1] in ['-s', '--sync'] and sys.argv[2] in ['tencent', 'ali']:
-        print('Start sync with {csp}...'.format(csp=sys.argv[2]))
+    if len(sys.argv) == 3 and sys.argv[1] in ['-s', '--sync']:
         start_sync(csp=sys.argv[2])
     else:
         print_help()
