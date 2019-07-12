@@ -78,41 +78,65 @@ class Synchronize:
         则视为首次运行，历史记录结构为只有根目录的树；历史文件将会直接影响到文件的唯一状态信息。
         :return:
         """
+        logger = logging.getLogger('{class_name} -> {function_name}'
+                                   .format(class_name=self.__class__.__name__,
+                                           function_name=inspect.stack()[0].function))
+        logger.info('开始初始化云同步系统')
         # 获取最新树结构
         self.metatree_cloud = initialize_metatree_cloud(self.cloud_path, self.cfs)
+        logger.info('获取最新的云端元信息树')
+        logger.debug('云端元信息树的值为 {metatree_cloud}'.format(metatree_cloud=self.metatree_cloud))
         self.metatree_local = initialize_metatree_local(self.local_path)
+        logger.info('获取最新的本地元信息树')
+        logger.debug('本地元信息树的值为 {metatree_local}'.format(metatree_local=self.metatree_local))
         # 获取历史树结构
         self.metatree_cloud_history = DirectoryStatus(self.cloud_path)
+        logger.info('根据云端路径 {cloud_path} 创建云端历史元信息树'.format(cloud_path=self.cloud_path))
         if not os.path.exists(self.history_path):
-            print('Historical file not found! It will be created later...')
+            logger.info('未在磁盘找到本地历史元信息树，它将会被创建')
             open(self.history_path, 'w').close()  # create historical file
+            logger.info('创建本地历史元信息树文件成功，文件名为 {history_path}'.format(history_path=self.history_path))
         if os.path.getsize(self.history_path) > 0:
+            logger.info('本地历史元信息树文件非空，尝试从中恢复本地历史元信息树')
             try:
                 with open(self.history_path, 'rb') as f:
                     self.metatree_local_history = pickle.load(f)
-                print('Successfully load metatree-history from historical file!')
-            except Exception as e:
-                print(e)
-                print('Read historical file error!')
+                logger.info('成功通过本地磁盘文件恢复本地历史元信息树')
+            except Exception as err:
+                logger.exception('读取本地磁盘中的历史元信息树文件出现错误，错误信息为 {err}'.format(err=err))
         else:
+            logger.info('本地历史元信息树文件为空')
             self.metatree_local_history = DirectoryStatus(self.local_path)
+            logger.info('根据本地路径 {local_path} 创建本地历史元信息树'.format(local_path=self.local_path))
         # 计算最新树摘要
         utils.get_entire_cloud_directory_hash(self.metatree_cloud, self.cfs)
+        logger.info('计算云端元信息树的哈希值')
+        logger.debug('云端元信息树的散列值为 {hash}'.format(hash=self.metatree_cloud.hash_value))
         utils.get_entire_local_directory_hash(self.metatree_local)
+        logger.info('计算本地元信息树的哈希值')
+        logger.debug('本地元信息树的散列值为 {hash}'.format(hash=self.metatree_cloud.hash_value))
+        logger.info('云同步系统初始化完成')
 
     def synchronize(self):
         """
         同步本地和云端指定的目录 包括算法 AlgorithmPUSH | AlgorithmPULL
         :return:
         """
+        logger = logging.getLogger('{class_name} -> {function_name}'
+                                   .format(class_name=self.__class__.__name__,
+                                           function_name=inspect.stack()[0].function))
+        logger.info('开始运行 PULL 算法')
         self.algorithm_pull(self.metatree_cloud, self.metatree_cloud_history,
                             self.metatree_local, self.metatree_local_history,
                             self.cloud_path, self.local_path)
+        logger.info('PULL 算法运行结束')
         # if self.update_and_validate():
         #     return
+        logger.info('开始运行 PUSH 算法')
         self.algorithm_push(self.metatree_cloud, self.metatree_cloud_history,
                             self.metatree_local, self.metatree_local_history,
                             self.cloud_path, self.local_path)
+        logger.info('PUSH 算法运行结束')
 
     def update_and_validate(self):
         """
@@ -120,28 +144,51 @@ class Synchronize:
         得到最新的目录结构，并计算节点摘要值，对比本地和云端的是否一致
         :return: Boolean
         """
+        logger = logging.getLogger('{class_name} -> {function_name}'
+                                   .format(class_name=self.__class__.__name__,
+                                           function_name=inspect.stack()[0].function))
         # 将当前的树结构保存到历史
         self.metatree_cloud_history = self.metatree_cloud
+        logger.info('将云端元信息树赋值给云端历史元信息树')
         self.metatree_local_history = self.metatree_local
+        logger.info('将本地元信息树赋值给本地历史元信息树')
         # 获取最新树结构
         self.metatree_cloud = initialize_metatree_cloud(self.cloud_path, self.cfs)
+        logger.info('获取最新的云端元信息树')
+        logger.debug('云端元信息树的值为 {metatree_cloud}'.format(metatree_cloud=self.metatree_cloud))
         self.metatree_local = initialize_metatree_local(self.local_path)
+        logger.info('获取最新的本地元信息树')
+        logger.debug('本地元信息树的值为 {metatree_local}'.format(metatree_local=self.metatree_local))
         # 计算树的摘要
         utils.get_entire_cloud_directory_hash(self.metatree_cloud, self.cfs)
+        logger.info('计算云端元信息树的哈希值')
+        logger.debug('云端元信息树的散列值为 {hash}'.format(hash=self.metatree_cloud.hash_value))
         utils.get_entire_local_directory_hash(self.metatree_local)
+        logger.info('计算本地元信息树的哈希值')
+        logger.debug('本地元信息树的散列值为 {hash}'.format(hash=self.metatree_cloud.hash_value))
         # 验证本地和云端的目录是否一致
-        return self.metatree_cloud.hash_value == self.metatree_local.hash_value
+        is_consistent = self.metatree_cloud.hash_value == self.metatree_local.hash_value
+        if is_consistent:
+            logger.info('本地数据和云端数据一致')
+        else:
+            logger.info('本地数据与云端数据不一致')
+        return is_consistent
 
     def save_history(self):
         """
         历史记录存到磁盘中
         :return:
         """
+        logger = logging.getLogger('{class_name} -> {function_name}'
+                                   .format(class_name=self.__class__.__name__,
+                                           function_name=inspect.stack()[0].function))
+        logger.info('尝试将本地历史元信息树写入本地磁盘')
         try:
             with open(self.history_path, 'wb') as f:
                 pickle.dump(self.metatree_local_history, f)
-        except Exception as e:
-            print(e)
+            logger.info('本地历史元信息树文件写入成功')
+        except Exception as err:
+            logger.exception('本地历史元信息树文件写入失败，错误信息为 {err}'.format(err=err))
 
     def algorithm_push(self, cloud, cloud_history, local, local_history, cloud_path, local_path):
         """
