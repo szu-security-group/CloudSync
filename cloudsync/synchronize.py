@@ -15,8 +15,7 @@ from synchronize_event_handler import SynchronizeEventHandler
 class Synchronize:
     def __init__(self, cfs: CloudFileSystem):
         logger = logging.getLogger('{class_name} -> {function_name}'
-                                   .format(class_name=self.__class__.__name__,
-                                           function_name=inspect.stack()[0].function))
+                                   .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
         self.cfs = cfs
         self.history_path = cfs.config['history_path']
         self.local_path = cfs.config['local_path']
@@ -46,8 +45,7 @@ class Synchronize:
         :return:
         """
         logger = logging.getLogger('{class_name} -> {function_name}'
-                                   .format(class_name=self.__class__.__name__,
-                                           function_name=inspect.stack()[0].function))
+                                   .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
         logger.info('云同步系统启动')
         self.close = False
         before = after = False
@@ -67,8 +65,7 @@ class Synchronize:
 
     def stop(self, sig, frame):
         logger = logging.getLogger('{class_name} -> {function_name}'
-                                   .format(class_name=self.__class__.__name__,
-                                           function_name=inspect.stack()[0].function))
+                                   .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
         self.close = True
         logger.debug('云同步系统关闭标志设置为 True')
 
@@ -79,8 +76,7 @@ class Synchronize:
         :return:
         """
         logger = logging.getLogger('{class_name} -> {function_name}'
-                                   .format(class_name=self.__class__.__name__,
-                                           function_name=inspect.stack()[0].function))
+                                   .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
         logger.info('开始初始化云同步系统')
         # 获取最新树结构
         self.metatree_cloud = initialize_metatree_cloud(self.cloud_path, self.cfs)
@@ -123,8 +119,7 @@ class Synchronize:
         :return:
         """
         logger = logging.getLogger('{class_name} -> {function_name}'
-                                   .format(class_name=self.__class__.__name__,
-                                           function_name=inspect.stack()[0].function))
+                                   .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
         logger.info('开始运行 PULL 算法')
         self.algorithm_pull(self.metatree_cloud, self.metatree_cloud_history,
                             self.metatree_local, self.metatree_local_history,
@@ -145,8 +140,7 @@ class Synchronize:
         :return: Boolean
         """
         logger = logging.getLogger('{class_name} -> {function_name}'
-                                   .format(class_name=self.__class__.__name__,
-                                           function_name=inspect.stack()[0].function))
+                                   .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
         # 将当前的树结构保存到历史
         self.metatree_cloud_history = self.metatree_cloud
         logger.info('将云端元信息树赋值给云端历史元信息树')
@@ -180,8 +174,7 @@ class Synchronize:
         :return:
         """
         logger = logging.getLogger('{class_name} -> {function_name}'
-                                   .format(class_name=self.__class__.__name__,
-                                           function_name=inspect.stack()[0].function))
+                                   .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
         logger.info('尝试将本地历史元信息树写入本地磁盘')
         try:
             with open(self.history_path, 'wb') as f:
