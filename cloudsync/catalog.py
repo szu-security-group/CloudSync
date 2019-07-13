@@ -37,7 +37,7 @@ class Catalog:
     def __str__(self):
         return '[Catalog: filename={filename} hash={hash}]'.format(
             filename=self.filename,
-            hash=self.hash_value[6:]
+            hash=self.hash_value[:6]
         )
 
 
@@ -72,7 +72,7 @@ class DirectoryStatus(Catalog):
         return '[DirectoryStatus: filename={filename} file_id={file_id} hash={hash}]'.format(
             filename=self.filename,
             file_id=self.file_id,
-            hash=self.hash_value[6:]
+            hash=self.hash_value[:6]
         )
 
 
@@ -84,7 +84,7 @@ class FileStatus(Catalog):
         return '[FileStatus: filename={filename} mtime={mtime} hash={hash}]'.format(
             filename=self.filename,
             mtime=time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(self.mtime))),
-            hash=self.hash_value[6:]
+            hash=self.hash_value[:6]
         )
 
 
