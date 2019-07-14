@@ -12,7 +12,7 @@ temp_file_path = os.path.join(sys.path[0], 'cloudsync_temp_file')
 def get_local_file_hash(file_path):
     """
     计算本地整个文件的摘要
-    :param file_path: 文件路径
+    :param file_path: 本地文件路径
     :return: 文件摘要
     """
     with open(file_path, 'rb') as f:
@@ -20,6 +20,12 @@ def get_local_file_hash(file_path):
 
 
 def get_cloud_file_hash(cloud_path, cfs):
+    """
+    计算云端整个文件的摘要
+    :param cloud_path: 云端文件路径
+    :param cfs: 云文件系统
+    :return: 文件摘要
+    """
     cfs.download(cloud_path, temp_file_path)
     return get_local_file_hash(temp_file_path)
 
@@ -27,13 +33,18 @@ def get_cloud_file_hash(cloud_path, cfs):
 def get_buffer_hash(buffer: bytes):
     """
     计算字节数组的摘要
-    :param buffer:
+    :param buffer: 要计算摘要的字节数组
     :return: 摘要值
     """
     return getattr(hashlib, hash_type)(buffer).hexdigest()
 
 
 def get_entire_local_directory_hash(directory):
+    """
+    计算本地目录状态的摘要
+    :param directory: 本地目录状态
+    :return: 文件摘要
+    """
     files_hash_value = ''
     for child in directory.child:
         if child.file_type == Catalog.IS_FOLDER:
@@ -46,6 +57,12 @@ def get_entire_local_directory_hash(directory):
 
 
 def get_entire_cloud_directory_hash(directory, cfs):
+    """
+    计算云端目录状态的摘要
+    :param directory: 云端目录状态
+    :param cfs: 云文件系统
+    :return: 文件摘要
+    """
     files_hash_value = ''
     for child in directory.child:
         if child.file_type == Catalog.IS_FOLDER:
