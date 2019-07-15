@@ -197,6 +197,9 @@ class Synchronize:
         :param local_path: 本地路径
         :return:
         """
+        logger = logging.getLogger('{class_name} -> {function_name}'
+                                   .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
+        logger.debug('遍历本地元信息树的每一项，判断是否需要进行同步操作')
         for catalog_local in local.child:
             filename = catalog_local.filename
             hash_value = catalog_local.hash_value
@@ -205,13 +208,25 @@ class Synchronize:
             catalog_local_history = local_history.find_catalog(next_local_path) if local_history is not None else None
             catalog_cloud = cloud.find_catalog(next_cloud_path) if cloud is not None else None
             catalog_cloud_history = cloud_history.find_catalog(next_cloud_path) if cloud_history is not None else None
+            logger.debug('当前项 catalog_local 为 {}'.format(catalog_local))
+            logger.debug('对应本地文件路径 next_local_path 为 {}'.format(next_local_path))
+            logger.debug('对应云端文件路径 next_cloud_path 为 {}'.format(next_cloud_path))
+            logger.debug('在本地历史树搜索的结果 catalog_local_history 为 {}'.format(catalog_local_history))
+            logger.debug('在云端树搜索的结果 catalog_cloud 为 {}'.format(catalog_cloud))
+            logger.debug('在云端历史树搜索的结果 catalog_cloud_history 为 {}'.format(catalog_cloud_history))
             if catalog_local.file_type == Catalog.IS_FOLDER:
+                logger.debug('当前项为目录')
                 # 尝试在本地历史中利用文件的 inode 或 UUID 查找信息
+                logger.debug('正尝试从本地历史中利用文件 ID 查找信息')
                 file_id_local_history = self.metatree_local_history.find_catalog(catalog_local.file_id)
+                logger.debug('查找结果 file_id_local_history 为 {}'.format(file_id_local_history))
                 if catalog_cloud_history is not None:
+                    logger.debug('云端历史非空，正从云端中利用云端历史的文件 ID 查找信息')
                     file_id_cloud = self.metatree_cloud.find_catalog(catalog_cloud_history.file_id)
+                    logger.debug('从云端查找的结果 file_id_cloud 为 {}'.format(file_id_cloud))
                 else:
                     file_id_cloud = None
+                    logger.debug('云端历史为空，file_id_cloud 设置为 None')
 
                 # 在云端存在且散列值相同，说明文件夹没变，跳过
                 if catalog_cloud is not None and catalog_cloud.hash_value == hash_value:
@@ -234,8 +249,11 @@ class Synchronize:
                     self.tasks.set_data(ops_constants['RENAME_CLOUD_FOLDER'],
                                         cloud_path + file_id_local_history.filename[len(local_path):], next_cloud_path)
             elif catalog_local.file_type == Catalog.IS_FILE:
+                logger.debug('当前项为文件')
                 # 在历史记录中，尝试利用摘要查找信息
+                logger.debug('正尝试从本地历史中利用文件摘要查找信息')
                 file_id_local_history = self.find_rename_file(local_history, local, hash_value)
+                logger.debug('查找结果 file_id_local_history 为 {}'.format(file_id_local_history))
                 if catalog_local_history is None and file_id_local_history is None:
                     # 在历史记录，名字和摘要都不存在，上传新文件
                     self.tasks.set_data(ops_constants['UPLOAD_FILE'],
@@ -258,6 +276,7 @@ class Synchronize:
                     # 历史记录中此文件名与摘要都与本地一致, 但在云端找不到此文件，删除此本地文件
                     self.tasks.set_data(ops_constants['DELETE_LOCAL_FILE'],
                                         next_local_path)
+            logger.debug('当前项 {filename} 处理完毕'.format(filename=filename))
 
     def algorithm_pull(self, cloud, cloud_history, local, local_history, cloud_path, local_path):
         """
@@ -273,6 +292,9 @@ class Synchronize:
         :param local_path: 本地路径
         :return:
         """
+        logger = logging.getLogger('{class_name} -> {function_name}'
+                                   .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
+        logger.debug('遍历云端元信息树的每一项，判断是否需要进行同步操作')
         for catalog_cloud in cloud.child:
             filename = catalog_cloud.filename
             hash_value = catalog_cloud.hash_value
@@ -281,13 +303,25 @@ class Synchronize:
             catalog_cloud_history = cloud_history.find_catalog(next_cloud_path) if cloud_history is not None else None
             catalog_local = local.find_catalog(next_local_path) if local is not None else None
             catalog_local_history = local_history.find_catalog(next_local_path) if local_history is not None else None
+            logger.debug('当前项 catalog_cloud 为 {}'.format(catalog_cloud))
+            logger.debug('对应本地文件路径 next_local_path 为 {}'.format(next_local_path))
+            logger.debug('对应云端文件路径 next_cloud_path 为 {}'.format(next_cloud_path))
+            logger.debug('在云端历史树搜索的结果 catalog_cloud_history 为 {}'.format(catalog_cloud_history))
+            logger.debug('在本地树搜索的结果 catalog_local 为 {}'.format(catalog_local))
+            logger.debug('在本地历史树搜索的结果 catalog_local_history 为 {}'.format(catalog_local_history))
             if catalog_cloud.file_type == Catalog.IS_FOLDER:
+                logger.debug('当前项为目录')
                 # 尝试在云端历史中利用文件的 inode 或 UUID 查找信息
+                logger.debug('正尝试从云端历史中利用文件 ID 查找信息')
                 file_id_cloud_history = self.metatree_cloud_history.find_catalog(catalog_cloud.file_id)
+                logger.debug('查找结果 file_id_cloud_history 为 {}'.format(file_id_cloud_history))
                 if catalog_local_history is not None:
+                    logger.debug('本地历史非空，正从本地中利用本地历史的文件 ID 查找信息')
                     file_id_local = self.metatree_local.find_catalog(catalog_local_history.file_id)
+                    logger.debug('从本地查找的结果 file_id_local 为 {}'.format(file_id_local))
                 else:
                     file_id_local = None
+                    logger.debug('本地历史为空，file_id_local 设置为 None')
 
                 # 在本地存在且散列值相同，说明文件夹没变，跳过
                 if catalog_local is not None and catalog_local.hash_value == hash_value:
@@ -310,8 +344,11 @@ class Synchronize:
                     self.tasks.set_data(ops_constants['RENAME_LOCAL_FOLDER'],
                                         local_path + file_id_cloud_history.filename[len(cloud_path):], next_local_path)
             elif catalog_cloud.file_type == Catalog.IS_FILE:
+                logger.debug('当前项为文件')
                 # 在历史记录中，尝试利用摘要查找信息
+                logger.debug('正尝试从云端中利用文件摘要查找信息')
                 hash_history = self.find_rename_file(local_history, cloud, hash_value)
+                logger.debug('查找结果 hash_history 为 {}'.format(hash_history))
                 if catalog_local_history is None and hash_history is None:
                     # 在历史记录，名字和摘要都不存在，下载新文件
                     self.tasks.set_data(ops_constants['DOWNLOAD_FILE'],
@@ -334,6 +371,7 @@ class Synchronize:
                     # 历史记录中此文件名与摘要都一致，但在本地找不到此文件，删除此云端文件
                     self.tasks.set_data(ops_constants['DELETE_CLOUD_FILE'],
                                         next_cloud_path)
+            logger.debug('当前项 {filename} 处理完毕'.format(filename=filename))
 
     @staticmethod
     def find_rename_file(history: DirectoryStatus, local: DirectoryStatus, hash_value: str):
