@@ -56,6 +56,9 @@ if __name__ == '__main__':
     # 将 handler 添加到 root handler
     root_logger.addHandler(file_handler)
     root_logger.addHandler(console_handler)
+    # 将引入模块的 log 等级提升到 warning
+    for _ in ['urllib3']:
+        logging.getLogger(_).setLevel(logging.WARNING)
 
     # 解析参数
     if len(sys.argv) == 3 and sys.argv[1] in ['-s', '--sync']:

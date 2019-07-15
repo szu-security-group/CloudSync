@@ -1,4 +1,5 @@
 import time
+import logging
 import oss2
 from uuid import uuid1 as uuid
 
@@ -12,6 +13,9 @@ class CloudFileSystem:
     """
 
     def __init__(self):
+        oss2.set_stream_logger(level=logging.WARNING)
+        oss2.set_file_logger(file_path='cloudsync.log', level=logging.WARNING)
+
         import cos_config
         self._access_key_id = cos_config.ali['access_key_id']
         self._access_key_secret = cos_config.ali['access_key_secret']
