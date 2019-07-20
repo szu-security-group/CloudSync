@@ -279,16 +279,17 @@ class Synchronize:
                 #     # 历史记录中此文件名与摘要都与本地一致, 但在云端找不到此文件，删除此本地文件
                 #     self.tasks.set_data(ops_constants['DELETE_LOCAL_FILE'],
                 #                         next_local_path)
+            logger.debug('当前项 {filename} 处理完毕'.format(filename=filename))
         if local_history is None:
             return
-        logger.debug('遍历云端元信息树的每一项，判断是否需要进行云端删除操作')
+        logger.debug('遍历本地元信息树的每一项，判断是否需要进行本地删除操作')
         for catalog_local_history in local_history.child:
             filename = catalog_local_history.filename
             next_local_path = local_path + filename[len(local_path):]
             next_cloud_path = cloud_path + filename[len(local_path):]
             catalog_local = local.find_catalog(next_local_path) if local is not None else None
             logger.debug('当前项 catalog_local_history 为 {}'.format(catalog_local_history))
-            logger.debug('对应云端文件路径 next_local_path 为 {}'.format(next_local_path))
+            logger.debug('对应本地文件路径 next_local_path 为 {}'.format(next_local_path))
             logger.debug('在本地树搜索的结果 catalog_local 为 {}'.format(catalog_local))
             # 在本地中，尝试利用文件 ID 查找信息
             logger.debug('正尝试从本地中利用文件摘要查找信息')
