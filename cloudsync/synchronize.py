@@ -228,11 +228,16 @@ class Synchronize:
                     file_id_cloud = None
                     logger.debug('云端历史为空，file_id_cloud 设置为 None')
 
-                # 在云端存在且散列值相同，说明文件夹没变，跳过
-                if catalog_cloud is not None and catalog_cloud.hash_value == hash_value:
-                    continue
-                # 在云端存在但散列值不相同，说明文件夹里面有修改，递归进去处理
-                if catalog_cloud is not None and catalog_cloud.hash_value != hash_value:
+                # # 在云端存在且散列值相同，说明文件夹没变，跳过
+                # if catalog_cloud is not None and catalog_cloud.hash_value == hash_value:
+                #     continue
+                # # 在云端存在但散列值不相同，说明文件夹里面有修改，递归进去处理
+                # if catalog_cloud is not None and catalog_cloud.hash_value != hash_value:
+                #     self.algorithm_push(catalog_cloud, catalog_cloud_history,
+                #                         catalog_local, catalog_local_history,
+                #                         next_cloud_path, next_local_path)
+                # 不管发生什么，直接递归进去
+                if catalog_cloud is not None:
                     self.algorithm_push(catalog_cloud, catalog_cloud_history,
                                         catalog_local, catalog_local_history,
                                         next_cloud_path, next_local_path)
