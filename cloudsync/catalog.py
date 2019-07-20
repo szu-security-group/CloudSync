@@ -153,10 +153,11 @@ def initialize_metatree_cloud(cloud_path, cfs):
     # 遍历目录下的子目录及子文件，并添加到 child 中
     logger.info('遍历云端目录 {cloud_path} 下的子目录和子文件，将它们加入当前目录的孩子列表中'.format(cloud_path=cloud_path))
     for filename in cfs.list_files(cloud_path):
+        filename = cloud_path + filename
         if filename.endswith('/'):
             # 插入目录
             logger.info('发现子目录 {filename}'.format(filename=filename))
-            subdir = initialize_metatree_cloud(cloud_path + filename, cfs)
+            subdir = initialize_metatree_cloud(filename, cfs)
             root.insert(subdir)
             logger.info('将子目录 {filename} 的目录状态插入到当前目录 {cloud_path}'.format(filename=filename, cloud_path=cloud_path))
         else:
@@ -165,7 +166,7 @@ def initialize_metatree_cloud(cloud_path, cfs):
             mtime = ''
             try:
                 logger.debug('获取云端文件的修改时间')
-                mtime = cfs.get_mtime(cloud_path + filename)
+                mtime = cfs.get_mtime(filename)
                 logger.debug('获取云端文件的修改时间成功')
             except Exception as err:
                 logger.exception('获取云端文件的修改时间失败, 错误信息为: {err}'.format(err=err))
