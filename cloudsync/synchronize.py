@@ -266,7 +266,7 @@ class Synchronize:
                 elif catalog_local_history is None and file_id_local_history is not None:
                     # 历史记录中不存在此目录名，但存在相同摘要，且本地最新，则重命名云端文件
                     self.tasks.set_data(ops_constants['RENAME_CLOUD_FILE'],
-                                        cloud_path + file_id_local_history.filename, next_cloud_path)
+                                        cloud_path + file_id_local_history.filename[len(local_path):], next_cloud_path)
                 elif catalog_local_history is not None \
                         and catalog_local_history.hash_value != catalog_local.hash_value \
                         and catalog_local.mtime > catalog_local_history.mtime:
