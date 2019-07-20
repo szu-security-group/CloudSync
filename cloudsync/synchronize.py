@@ -159,7 +159,7 @@ class Synchronize:
         logger.debug('云端元信息树的散列值为 {hash}'.format(hash=self.metatree_cloud.hash_value))
         utils.get_entire_local_directory_hash(self.metatree_local)
         logger.info('计算本地元信息树的哈希值')
-        logger.debug('本地元信息树的散列值为 {hash}'.format(hash=self.metatree_cloud.hash_value))
+        logger.debug('本地元信息树的散列值为 {hash}'.format(hash=self.metatree_local.hash_value))
         # 验证本地和云端的目录是否一致
         is_consistent = self.metatree_cloud.hash_value == self.metatree_local.hash_value
         if is_consistent:
