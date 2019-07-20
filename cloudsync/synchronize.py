@@ -218,11 +218,11 @@ class Synchronize:
                 logger.debug('当前项为目录')
                 # 尝试在本地历史中利用文件的 inode 或 UUID 查找信息
                 logger.debug('正尝试从本地历史中利用文件 ID 查找信息')
-                file_id_local_history = self.metatree_local_history.find_catalog(catalog_local.file_id)
+                file_id_local_history = local_history.find_catalog(catalog_local.file_id)
                 logger.debug('查找结果 file_id_local_history 为 {}'.format(file_id_local_history))
                 if catalog_cloud_history is not None:
                     logger.debug('云端历史非空，正从云端中利用云端历史的文件 ID 查找信息')
-                    file_id_cloud = self.metatree_cloud.find_catalog(catalog_cloud_history.file_id)
+                    file_id_cloud = cloud.find_catalog(catalog_cloud_history.file_id)
                     logger.debug('从云端查找的结果 file_id_cloud 为 {}'.format(file_id_cloud))
                 else:
                     file_id_cloud = None
@@ -313,11 +313,11 @@ class Synchronize:
                 logger.debug('当前项为目录')
                 # 尝试在云端历史中利用文件的 inode 或 UUID 查找信息
                 logger.debug('正尝试从云端历史中利用文件 ID 查找信息')
-                file_id_cloud_history = self.metatree_cloud_history.find_catalog(catalog_cloud.file_id)
+                file_id_cloud_history = cloud_history.find_catalog(catalog_cloud.file_id)
                 logger.debug('查找结果 file_id_cloud_history 为 {}'.format(file_id_cloud_history))
                 if catalog_local_history is not None:
                     logger.debug('本地历史非空，正从本地中利用本地历史的文件 ID 查找信息')
-                    file_id_local = self.metatree_local.find_catalog(catalog_local_history.file_id)
+                    file_id_local = local.find_catalog(catalog_local_history.file_id)
                     logger.debug('从本地查找的结果 file_id_local 为 {}'.format(file_id_local))
                 else:
                     file_id_local = None
