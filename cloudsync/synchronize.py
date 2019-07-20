@@ -257,15 +257,13 @@ class Synchronize:
                 logger.debug('当前项为文件')
                 # 在历史记录中，尝试利用摘要查找信息
                 logger.debug('正尝试从本地历史中利用文件摘要查找信息')
-                file_id_local_history = self.find_rename_file(local_history, local, hash_value)
+                file_id_local_history = local_history.find_catalog(catalog_local.file_id)
                 logger.debug('查找结果 file_id_local_history 为 {}'.format(file_id_local_history))
                 if catalog_local_history is None and file_id_local_history is None:
                     # 在历史记录，名字和摘要都不存在，上传新文件
                     self.tasks.set_data(ops_constants['UPLOAD_FILE'],
                                         next_local_path, next_cloud_path)
-                elif catalog_local_history is None \
-                        and file_id_local_history is not None \
-                        and catalog_local.mtime > file_id_local_history.mtime:
+                elif catalog_local_history is None and file_id_local_history is not None:
                     # 历史记录中不存在此目录名，但存在相同摘要，且本地最新，则重命名云端文件
                     self.tasks.set_data(ops_constants['RENAME_CLOUD_FILE'],
                                         cloud_path + file_id_local_history.filename, next_cloud_path)
