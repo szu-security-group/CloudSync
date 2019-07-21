@@ -15,8 +15,12 @@ def get_local_file_hash(file_path):
     :param file_path: 本地文件路径
     :return: 文件摘要
     """
-    with open(file_path, 'rb') as f:
-        return getattr(hashlib, hash_type)(f.read()).hexdigest()
+    try:
+        with open(file_path, 'rb') as f:
+            return getattr(hashlib, hash_type)(f.read()).hexdigest()
+    except Exception as e:
+        print(e)
+        return ''
 
 
 def get_cloud_file_hash(cloud_path, cfs):
