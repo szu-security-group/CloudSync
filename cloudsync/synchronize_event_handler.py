@@ -28,12 +28,13 @@ class SynchronizeEventHandler:
         logger.info('已创建云端文件夹 {to_path}'.format(to_path=to_path))
         logger.info('遍历本地文件夹 {from_path} 中的内容，递归上传'.format(from_path=from_path))
         for filename in os.listdir(from_path):
+            filename = from_path + filename
             if os.path.isdir(filename):
-                logger.info('发现本地文件夹 {from_path}{filename}'.format(from_path=from_path, filename=filename + '/'))
-                self.create_cloud_folder(from_path + filename + '/', to_path + filename + '/')
+                logger.info('发现本地文件夹 {filename}'.format(filename=filename + '/'))
+                self.create_cloud_folder(filename + '/', to_path + filename[len(from_path):] + '/')
             else:
-                logger.info('发现本地文件 {from_path}{filename}'.format(from_path=from_path, filename=filename))
-                self.upload(from_path + filename, to_path + filename)
+                logger.info('发现本地文件 {filename}'.format(filename=filename))
+                self.upload(filename, to_path + filename[len(from_path):])
         logger.info('上传本地文件夹 {from_path} 到云端文件夹 {to_path} 完成'.format(from_path=from_path, to_path=to_path))
 
     def create_local_folder(self, from_path=None, to_path=None):
@@ -131,15 +132,15 @@ class SynchronizeEventHandler:
         local_path = self.from_path if local_path is None else local_path
         logger.info('准备删除本地文件夹 {local_path}'.format(local_path=local_path))
         logger.info('遍历本地文件夹 {local_path} 中的内容，递归删除'.format(local_path=local_path))
-        folder_name = local_path.split('/')[-2] + '/'
         for filename in os.listdir(local_path):
+            filename = local_path + filename
             if os.path.isdir(filename):
-                logger.info('发现本地文件夹 {local_path}{filename}'.format(local_path=local_path, filename=filename + '/'))
-                self.delete_local_folder(local_path + filename + '/')
+                logger.info('发现本地文件夹 {filename}'.format(filename=filename + '/'))
+                self.delete_local_folder(filename + '/')
             else:
-                logger.info('发现本地文件 {local_path}{filename}'.format(local_path=local_path, filename=filename))
+                logger.info('发现本地文件 {filename}'.format(filename=filename))
                 os.remove(filename)
-        os.removedirs(folder_name)
+        os.removedirs(local_path)
         logger.info('删除本地文件夹 {local_path} 完成'.format(local_path=local_path))
 
     def update_cloud_file(self):
