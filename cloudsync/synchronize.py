@@ -110,7 +110,7 @@ class Synchronize:
         logger.debug('云端元信息树的散列值为 {hash}'.format(hash=self.metatree_cloud.hash_value))
         utils.get_entire_local_directory_hash(self.metatree_local)
         logger.info('计算本地元信息树的哈希值')
-        logger.debug('本地元信息树的散列值为 {hash}'.format(hash=self.metatree_cloud.hash_value))
+        logger.debug('本地元信息树的散列值为 {hash}'.format(hash=self.metatree_local.hash_value))
         logger.info('云同步系统初始化完成')
 
     def synchronize(self):
