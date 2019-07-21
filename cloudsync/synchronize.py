@@ -218,7 +218,10 @@ class Synchronize:
                 logger.debug('当前项为目录')
                 # 尝试在本地历史中利用文件的 inode 或 UUID 查找信息
                 logger.debug('正尝试从本地历史中利用文件 ID 查找信息')
-                file_id_local_history = local_history.find_catalog(catalog_local.file_id)
+                if local_history is not None:
+                    file_id_local_history = local_history.find_catalog(catalog_local.file_id)
+                else:
+                    file_id_local_history = None
                 logger.debug('查找结果 file_id_local_history 为 {}'.format(file_id_local_history))
                 if catalog_cloud_history is not None:
                     logger.debug('云端历史非空，正从云端中利用云端历史的文件 ID 查找信息')
@@ -257,7 +260,10 @@ class Synchronize:
                 logger.debug('当前项为文件')
                 # 在历史记录中，尝试利用摘要查找信息
                 logger.debug('正尝试从本地历史中利用文件摘要查找信息')
-                file_id_local_history = local_history.find_catalog(catalog_local.file_id)
+                if local_history is not None:
+                    file_id_local_history = local_history.find_catalog(catalog_local.file_id)
+                else:
+                    file_id_local_history = None
                 logger.debug('查找结果 file_id_local_history 为 {}'.format(file_id_local_history))
                 if catalog_local_history is None and file_id_local_history is None:
                     # 在历史记录，名字和摘要都不存在，上传新文件
@@ -336,7 +342,10 @@ class Synchronize:
                 logger.debug('当前项为目录')
                 # 尝试在云端历史中利用文件的 inode 或 UUID 查找信息
                 logger.debug('正尝试从云端历史中利用文件 ID 查找信息')
-                file_id_cloud_history = cloud_history.find_catalog(catalog_cloud.file_id)
+                if cloud_history is not None:
+                    file_id_cloud_history = cloud_history.find_catalog(catalog_cloud.file_id)
+                else:
+                    file_id_cloud_history = None
                 logger.debug('查找结果 file_id_cloud_history 为 {}'.format(file_id_cloud_history))
                 if catalog_local_history is not None:
                     logger.debug('本地历史非空，正从本地中利用本地历史的文件 ID 查找信息')
@@ -375,7 +384,10 @@ class Synchronize:
                 logger.debug('当前项为文件')
                 # 在历史记录中，尝试利用摘要查找信息
                 logger.debug('正尝试从云端历史中利用文件摘要查找信息')
-                file_id_cloud_history = cloud_history.find_catalog(catalog_cloud.file_id)
+                if cloud_history is not None:
+                    file_id_cloud_history = cloud_history.find_catalog(catalog_cloud.file_id)
+                else:
+                    file_id_cloud_history = None
                 logger.debug('查找结果 file_id_cloud_history 为 {}'.format(file_id_cloud_history))
                 if catalog_local_history is None and file_id_cloud_history is None:
                     # 在历史记录，名字和摘要都不存在，下载新文件
