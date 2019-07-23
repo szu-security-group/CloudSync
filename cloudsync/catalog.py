@@ -81,9 +81,10 @@ class FileStatus(Catalog):
         super().__init__(filename, Catalog.IS_FILE, hash_value, mtime, file_id)
 
     def __str__(self):
-        return '[FileStatus: filename={filename} mtime={mtime} hash={hash}]'.format(
+        return '[FileStatus: filename={filename} mtime={mtime} file_id={file_id} hash={hash}]'.format(
             filename=self.filename,
             mtime=time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(self.mtime))),
+            file_id=self.file_id,
             hash=self.hash_value[:6]
         )
 
@@ -121,10 +122,11 @@ def initialize_metatree_local(local_path):
             try:
                 logger.debug('获取本地文件的修改时间')
                 mtime = str(int(os.path.getmtime(filename)))
+                file_id = str(os.stat(filename).st_ino)
                 logger.debug('获取本地文件的修改时间成功')
             except Exception as err:
                 logger.exception('获取本地文件的修改时间失败, 错误信息为: {err}'.format(err=err))
-            subfile = FileStatus(filename, mtime=mtime)
+            subfile = FileStatus(filename, mtime=mtime, file_id=file_id)
             root.insert(subfile)
             logger.info('将子文件 {filename} 的文件状态插入到当前目录 {local_path}'.format(filename=filename, local_path=local_path))
             logger.debug('子文件 {filename} 的文件状态为: {subfile}'.format(filename=filename, subfile=subfile))
@@ -166,11 +168,13 @@ def initialize_metatree_cloud(cloud_path, cfs):
             mtime = ''
             try:
                 logger.debug('获取云端文件的修改时间')
-                mtime = cfs.get_mtime(filename)
+                stat = cfs.stat_file(filename)
+                mtime = stat['mtime']
+                file_id = stat['uuid']
                 logger.debug('获取云端文件的修改时间成功')
             except Exception as err:
                 logger.exception('获取云端文件的修改时间失败, 错误信息为: {err}'.format(err=err))
-            subfile = FileStatus(filename, mtime=mtime)
+            subfile = FileStatus(filename, mtime=mtime, file_id=file_id)
             root.insert(subfile)
             logger.info('将子文件 {filename} 的文件状态插入到当前目录 {cloud_path}'.format(filename=filename, cloud_path=cloud_path))
             logger.debug('子文件 {filename} 的文件状态为: {subfile}'.format(filename=filename, subfile=subfile))
