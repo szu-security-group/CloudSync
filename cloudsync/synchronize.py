@@ -85,17 +85,34 @@ class Synchronize:
         self.metatree_local = initialize_metatree_local(self.local_path)
         logger.info('获取最新的本地元信息树')
         logger.debug('本地元信息树的值为 {metatree_local}'.format(metatree_local=self.metatree_local))
-        # 获取历史树结构
-        self.metatree_cloud_history = DirectoryStatus(self.cloud_path)
-        logger.info('根据云端路径 {cloud_path} 创建云端历史元信息树'.format(cloud_path=self.cloud_path))
-        if not os.path.exists(self.history_path):
+        # 获取云端历史树结构
+        cloud_history_path = self.history_path + '.cloud'
+        if not os.path.exists(cloud_history_path):
+            logger.info('未在磁盘找到云端历史元信息树，它将会被创建')
+            open(cloud_history_path, 'w').close()  # create historical file
+            logger.info('创建云端历史元信息树文件成功，文件名为 {}'.format(cloud_history_path))
+        if os.path.getsize(cloud_history_path) > 0:
+            logger.info('云端历史元信息树文件非空，尝试从中恢复云端历史元信息树')
+            try:
+                with open(cloud_history_path, 'rb') as f:
+                    self.metatree_cloud_history = pickle.load(f)
+                logger.info('成功通过本地磁盘文件恢复云端历史元信息树')
+            except Exception as err:
+                logger.exception('读取本地磁盘中的云端历史元信息树文件出现错误，错误信息为 {err}'.format(err=err))
+        else:
+            logger.info('云端历史元信息树文件为空')
+            self.metatree_cloud_history = DirectoryStatus(self.cloud_path)
+            logger.info('根据云端路径 {cloud_path} 创建云端历史元信息树'.format(cloud_path=self.cloud_path))
+        # 获取本地历史树结构
+        local_history_path = self.history_path + '.local'
+        if not os.path.exists(local_history_path):
             logger.info('未在磁盘找到本地历史元信息树，它将会被创建')
-            open(self.history_path, 'w').close()  # create historical file
-            logger.info('创建本地历史元信息树文件成功，文件名为 {history_path}'.format(history_path=self.history_path))
-        if os.path.getsize(self.history_path) > 0:
+            open(local_history_path, 'w').close()  # create historical file
+            logger.info('创建本地历史元信息树文件成功，文件名为 {}'.format(local_history_path))
+        if os.path.getsize(local_history_path) > 0:
             logger.info('本地历史元信息树文件非空，尝试从中恢复本地历史元信息树')
             try:
-                with open(self.history_path, 'rb') as f:
+                with open(local_history_path, 'rb') as f:
                     self.metatree_local_history = pickle.load(f)
                 logger.info('成功通过本地磁盘文件恢复本地历史元信息树')
             except Exception as err:
@@ -177,11 +194,18 @@ class Synchronize:
                                    .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
         logger.info('尝试将本地历史元信息树写入本地磁盘')
         try:
-            with open(self.history_path, 'wb') as f:
+            with open(self.history_path + '.local', 'wb') as f:
                 pickle.dump(self.metatree_local_history, f)
             logger.info('本地历史元信息树文件写入成功')
         except Exception as err:
             logger.exception('本地历史元信息树文件写入失败，错误信息为 {err}'.format(err=err))
+        logger.info('尝试将云端历史元信息树写入本地磁盘')
+        try:
+            with open(self.history_path + '.cloud', 'wb') as f:
+                pickle.dump(self.metatree_cloud_history, f)
+            logger.info('云端历史元信息树文件写入成功')
+        except Exception as err:
+            logger.exception('云端历史元信息树文件写入失败，错误信息为 {err}'.format(err=err))
 
     def algorithm_push(self, cloud, cloud_history, local, local_history, cloud_path, local_path):
         """
