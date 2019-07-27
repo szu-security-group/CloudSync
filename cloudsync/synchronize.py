@@ -454,26 +454,3 @@ class Synchronize:
             elif catalog_cloud_history.file_type == Catalog.IS_FILE and catalog_cloud is None and file_id_cloud is None:
                 self.tasks.set_data(ops_constants['DELETE_LOCAL_FILE'], next_local_path)
             logger.debug('当前项 {filename} 处理完毕'.format(filename=filename))
-
-    @staticmethod
-    def find_rename_file(history: DirectoryStatus, local: DirectoryStatus, hash_value: str):
-        """
-        在历史记录中，找到具有重命名规则的某个文件；
-        重命名规则：本地一个文件名，历史不存在，但二者摘要值一样，
-        而且这个文件不能是其他具有相同内容的文件（例如原文件的副本），必须是真正被重命名的文件；
-        :param history: 历史目录
-        :param local: 本地目录
-        :param hash_value: 消息摘要
-        :return: 重命名的子文件或者为空
-        """
-        number = 1
-        exit_flag = 0
-        hash_history = None
-        while exit_flag != 1:
-            hash_history = history.find_catalog(hash_value, number)
-            number += 1
-            if hash_history is None or (
-                    not hash_history.filename.endswith('/') and local.find_catalog(hash_history.filename) is None
-            ):
-                exit_flag = 1
-        return hash_history
