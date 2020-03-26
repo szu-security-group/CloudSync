@@ -58,7 +58,7 @@ if __name__ == '__main__':
     root_logger.addHandler(file_handler)
     root_logger.addHandler(console_handler)
     # 将引入模块的 log 等级提升到 warning
-    for _ in ['urllib3']:
+    for _ in ['urllib3', 'qcloud_cos']:
         logging.getLogger(_).setLevel(logging.WARNING)
 
     # 解析参数

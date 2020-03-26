@@ -1,6 +1,7 @@
 import os
 import time
 import qcloud_cos
+from uuid import uuid1 as uuid
 
 import utils
 
@@ -39,22 +40,28 @@ class CloudFileSystem:
         :return:
         """
         if local_path.endswith('/'):
-            response = self._client.put_object(Bucket=self._bucket,
-                                               Key=cloud_path,
-                                               Body=b'',
-                                               Metadata={
-                                                   'x-cos-meta-mtime': str(int(time.time()))
-                                               })
+            response = self.create_folder(cloud_path)
         else:
-            file_hash = utils.get_local_file_hash(local_path)
+            # get file metadata
+            file_hash = ''
+            try:
+                file_hash = utils.get_local_file_hash(local_path)
+            except Exception as e:
+                print(e)
+            file_mtime = str(int(time.time()))
+            file_id = str(uuid())
+
+            # upload file
             with open(local_path, 'rb') as f:
                 response = self._client.put_object(Bucket=self._bucket,
                                                    Key=cloud_path,
                                                    Body=f,
-                                                   ContentLength=str(os.path.getsize(local_path)),
+                                                   # TODO: 加上后不能上传大小为0B的文件，感觉是腾讯云的问题
+                                                   # ContentLength=str(os.path.getsize(local_path)),
                                                    Metadata={
-                                                       'x-cos-meta-mtime': str(int(time.time())),
-                                                       'x-cos-meta-hash': file_hash
+                                                       'x-cos-meta-hash': file_hash,
+                                                       'x-cos-meta-mtime': file_mtime,
+                                                       'x-cos-meta-uuid': file_id
                                                    })
         return response
 
@@ -68,8 +75,6 @@ class CloudFileSystem:
         """
         response = self._client.get_object(Bucket=self._bucket, Key=cloud_path)
         response['Body'].get_stream_to_file(local_path)
-        if 'x-cos-meta-hash' not in response.keys():
-            self.set_hash(cloud_path, utils.get_local_file_hash(local_path))
 
     def delete(self, cloud_path):
         """
@@ -89,15 +94,27 @@ class CloudFileSystem:
         """
         if cloud_path.endswith('/') or not self._client.object_exists(Bucket=self._bucket, Key=cloud_path):
             return
-        file_hash = utils.get_local_file_hash(local_path)
+
+        # get file metadata
+        file_size = file_hash = ''
+        try:
+            file_size = str(os.path.getsize(local_path))
+            file_hash = utils.get_local_file_hash(local_path)
+        except Exception as e:
+            print(e)
+        file_mtime = str(int(time.time()))
+        file_id = self.stat_file(cloud_path)['uuid']
+
+        # upload file
         with open(local_path, 'rb') as f:
             self._client.put_object(Bucket=self._bucket,
                                     Key=cloud_path,
                                     Body=f,
-                                    ContentLength=os.path.getsize(local_path),
+                                    ContentLength=file_size,
                                     Metadata={
-                                        'x-cos-meta-mtime': str(int(time.time())),
-                                        'x-cos-meta-hash': file_hash
+                                        'x-cos-meta-hash': file_hash,
+                                        'x-cos-meta-mtime': file_mtime,
+                                        'x-cos-meta-uuid': file_id
                                     })
 
     def rename(self, old_cloud_path, new_cloud_path):
@@ -135,27 +152,23 @@ class CloudFileSystem:
         # cloud_path 结尾若不是 / , 上传之后不会表现为文件夹
         if not cloud_path.endswith('/'):
             cloud_path += '/'
+
+        # get file metadata
+        file_hash = utils.get_buffer_hash(b'')
+        file_mtime = str(int(time.time()))
+        file_id = str(uuid())
+
+        # create folder
         response = self._client.put_object(Bucket=self._bucket,
                                            Key=cloud_path,
                                            Body=b'',
                                            ContentLength='0',
                                            Metadata={
-                                               'x-cos-meta-mtime': str(int(time.time()))
+                                               'x-cos-meta-hash': file_hash,
+                                               'x-cos-meta-mtime': file_mtime,
+                                               'x-cos-meta-uuid': file_id
                                            })
         return response
-
-    def stat_file(self, cloud_path):
-        """
-        查询文件属性
-        要求返回值中，key 至少包括 hash、mtime
-        :param cloud_path:
-        :return:
-        """
-        metadata = self._client.head_object(Bucket=self._bucket, Key=cloud_path)
-        return {
-            'hash': metadata.get('x-cos-meta-hash', self.get_hash(cloud_path)),
-            'mtime': metadata.get('x-cos-meta-mtime', self.get_mtime(cloud_path))
-        }
 
     def list_files(self, cloud_path):
         """
@@ -175,16 +188,56 @@ class CloudFileSystem:
         files += [filename.split('/')[-1] for filename in items if not filename.endswith('/')]
         return files
 
-    def set_hash(self, cloud_path, hash_value):
+    def stat_file(self, cloud_path):
         """
-        设置文件摘要 hash
+        查询文件属性
+        要求返回值中，key 至少包括 hash、mtime、uuid
         :param cloud_path:
-        :param hash_value:
         :return:
         """
+        set_stat_flag = False
         metadata = self._client.head_object(Bucket=self._bucket, Key=cloud_path)
-        metadata = {key: value for key, value in metadata.items() if key.startswith('x-cos-meta-')}
-        metadata['x-cos-meta-hash'] = str(hash_value)
+        # get hash
+        if 'x-cos-meta-hash' in metadata.keys():
+            hash_value = metadata['x-cos-meta-hash']
+        else:
+            hash_value = utils.get_cloud_file_hash(cloud_path, self)
+            set_stat_flag = True
+        # get mtime
+        if 'x-cos-meta-mtime' in metadata.keys():
+            mtime = metadata['x-cos-meta-mtime']
+        else:
+            mtime = str(int(time.time()))
+            set_stat_flag = True
+        # get uuid
+        if 'x-cos-meta-uuid' in metadata.keys():
+            file_id = metadata['x-cos-meta-uuid']
+        else:
+            file_id = str(uuid())
+            set_stat_flag = True
+
+        # construct stat
+        stat = {
+            'hash': hash_value,
+            'mtime': mtime,
+            'uuid': file_id
+        }
+        if set_stat_flag:
+            self.set_stat(cloud_path, stat)
+        return stat
+
+    def set_stat(self, cloud_path, stat):
+        """
+        修改文件属性
+        :param cloud_path: 云端文件路径
+        :param stat: 文件熟悉
+        :return:
+        """
+        metadata = {
+            'x-cos-meta-hash': stat['hash'],
+            'x-cos-meta-mtime': stat['mtime'],
+            'x-cos-meta-uuid': stat['uuid'],
+        }
         response = self._client.copy_object(Bucket=self._bucket,
                                             Key=cloud_path,
                                             CopySource={
@@ -195,6 +248,18 @@ class CloudFileSystem:
                                             },
                                             CopyStatus='Replaced',
                                             Metadata=metadata)
+        return response
+
+    def set_hash(self, cloud_path, hash_value):
+        """
+        设置文件摘要 hash
+        :param cloud_path:
+        :param hash_value:
+        :return:
+        """
+        stat = self.stat_file(cloud_path)
+        stat['hash'] = hash_value
+        response = self.set_stat(cloud_path, stat)
         return response
 
     def get_hash(self, cloud_path):
@@ -204,14 +269,7 @@ class CloudFileSystem:
         :param cloud_path:
         :return:
         """
-        metadata = self._client.head_object(Bucket=self._bucket, Key=cloud_path)
-        if 'x-cos-meta-hash' in metadata.keys():
-            hash_value = metadata['x-cos-meta-hash']
-        else:
-            # todo: 这里可能会重复计算hash: utils.get_cloud_file_hash -> cfs_tencent.download -> set_hash
-            hash_value = utils.get_cloud_file_hash(cloud_path, self)
-            self.set_hash(cloud_path, hash_value)
-        return hash_value
+        return self.stat_file(cloud_path)['hash']
 
     def set_mtime(self, cloud_path, mtime):
         """
@@ -221,19 +279,9 @@ class CloudFileSystem:
         :param mtime:
         :return:
         """
-        metadata = self._client.head_object(Bucket=self._bucket, Key=cloud_path)
-        metadata = {key: value for key, value in metadata.items() if key.startswith('x-cos-meta-')}
-        metadata['x-cos-meta-mtime'] = str(mtime)
-        response = self._client.copy_object(Bucket=self._bucket,
-                                            Key=cloud_path,
-                                            CopySource={
-                                                'Appid': self._app_id,
-                                                'Bucket': self._bucket_name,
-                                                'Key': cloud_path,
-                                                'Region': self._region
-                                            },
-                                            CopyStatus='Replaced',
-                                            Metadata=metadata)
+        stat = self.stat_file(cloud_path)
+        stat['mtime'] = mtime
+        response = self.set_stat(cloud_path, stat)
         return response
 
     def get_mtime(self, cloud_path):
@@ -243,10 +291,4 @@ class CloudFileSystem:
         :param cloud_path:
         :return:
         """
-        metadata = self._client.head_object(Bucket=self._bucket, Key=cloud_path)
-        if 'x-cos-meta-mtime' in metadata.keys():
-            mtime = metadata['x-cos-meta-mtime']
-        else:
-            mtime = str(int(time.time()))
-            self.set_mtime(cloud_path, mtime)
-        return mtime
+        return self.stat_file(cloud_path)['mtime']
