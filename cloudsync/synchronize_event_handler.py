@@ -24,6 +24,12 @@ class SynchronizeEventHandler:
         from_path = self.from_path if from_path is None else from_path
         to_path = self.to_path if to_path is None else to_path
         logger.info('准备将本地文件夹 {from_path} 上传到云端文件夹 {to_path}'.format(from_path=from_path, to_path=to_path))
+
+        # check if the cloud folder exits
+        if self.cfs.stat_file(to_path) is not None:
+            return
+
+        # create folder
         self.cfs.create_folder(to_path)
         logger.info('已创建云端文件夹 {to_path}'.format(to_path=to_path))
         logger.info('遍历本地文件夹 {from_path} 中的内容，递归上传'.format(from_path=from_path))
@@ -72,6 +78,12 @@ class SynchronizeEventHandler:
                                    .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
         from_path = self.from_path if from_path is None else from_path
         to_path = self.to_path if to_path is None else to_path
+
+        # check if the cloud file exits
+        if self.cfs.stat_file(to_path) is not None:
+            return
+
+        # upload file
         logger.info('准备将本地文件 {from_path} 上传到云端文件 {to_path}'.format(from_path=from_path, to_path=to_path))
         self.cfs.upload(to_path, from_path)
         logger.info('上传本地文件 {from_path} 到云端文件 {to_path} 完成'.format(from_path=from_path, to_path=to_path))
@@ -84,6 +96,12 @@ class SynchronizeEventHandler:
         logger = logging.getLogger('{class_name} -> {function_name}'
                                    .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
         cloud_path = self.from_path
+
+        # check if the cloud file exits
+        if self.cfs.stat_file(cloud_path) is None:
+            return
+
+        # delete file
         logger.info('准备删除云端文件 {cloud_path}'.format(cloud_path=cloud_path))
         self.cfs.delete(cloud_path)
         logger.info('删除云端文件 {cloud_path} 完成'.format(cloud_path=cloud_path))
@@ -109,6 +127,12 @@ class SynchronizeEventHandler:
         logger = logging.getLogger('{class_name} -> {function_name}'
                                    .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
         cloud_path = self.from_path if cloud_path is None else cloud_path
+
+        # check if the cloud folder exits
+        if self.cfs.stat_file(cloud_path) is None:
+            return
+
+        # delete folder
         logger.info('准备删除云端文件夹 {cloud_path}'.format(cloud_path=cloud_path))
         logger.info('遍历云端文件夹 {cloud_path} 中的内容，递归删除'.format(cloud_path=cloud_path))
         for filename in self.cfs.list_files(cloud_path):
@@ -193,6 +217,12 @@ class SynchronizeEventHandler:
                                    .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
         from_path = self.from_path
         to_path = self.to_path
+
+        # check if the cloud file exits
+        if self.cfs.stat_file(from_path) is None:
+            return
+
+        # rename file
         logger.info('准备将云端文件 {from_path} 重命名为 {to_path}'.format(from_path=from_path, to_path=to_path))
         self.cfs.rename(from_path, to_path)
         logger.info('重命名云端文件 {from_path} 为 {to_path} 成功'.format(from_path=from_path, to_path=to_path))
@@ -219,6 +249,12 @@ class SynchronizeEventHandler:
                                    .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
         from_path = self.from_path
         to_path = self.to_path
+
+        # check if the cloud folder exits
+        if self.cfs.stat_file(from_path) is None:
+            return
+
+        # rename folder
         logger.info('准备将云端文件夹 {from_path} 重命名为 {to_path}'.format(from_path=from_path, to_path=to_path))
         self.cfs.rename(from_path, to_path)
         logger.info('重命名云端文件夹 {from_path} 为 {to_path} 成功'.format(from_path=from_path, to_path=to_path))
