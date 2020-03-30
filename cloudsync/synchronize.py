@@ -59,7 +59,7 @@ class Synchronize:
             if before != after and after is True:
                 print('同步成功')
                 logger.info('同步成功')
-                self.save_history()
+            self.save_history()
         print('同步关闭')
         logger.info('云同步系统关闭')
 
