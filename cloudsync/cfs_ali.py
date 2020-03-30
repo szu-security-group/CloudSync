@@ -193,7 +193,12 @@ class CloudFileSystem:
         :return:
         """
         set_stat_flag = False
-        metadata = self._client.head_object(key=cloud_path)
+        try:
+            metadata = self._client.head_object(key=cloud_path)
+        except oss2.exceptions.NotFound:
+            # todo: 其他地方需要处理这个 None
+            return None
+
         # get hash
         if 'x-oss-meta-hash' in metadata.headers:
             hash_value = metadata.headers['x-oss-meta-hash']
