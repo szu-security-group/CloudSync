@@ -298,8 +298,7 @@ class Synchronize:
                     self.tasks.set_data(ops_constants['RENAME_CLOUD_FILE'],
                                         cloud_path + file_id_local_history.filename[len(local_path):], next_cloud_path)
                 elif catalog_local_history is not None \
-                        and catalog_local_history.hash_value != catalog_local.hash_value \
-                        and catalog_local.mtime > catalog_local_history.mtime:
+                        and catalog_local_history.hash_value != catalog_local.hash_value:
                     # 历史记录中存在此文件名，此历史文件与本地文件摘要值不相同，且本地最新，则更新云端文件
                     self.tasks.set_data(ops_constants['UPDATE_CLOUD_FILE'],
                                         next_local_path, next_cloud_path)
@@ -413,17 +412,16 @@ class Synchronize:
                 else:
                     file_id_cloud_history = None
                 logger.debug('查找结果 file_id_cloud_history 为 {}'.format(file_id_cloud_history))
-                if catalog_local_history is None and file_id_cloud_history is None:
+                if catalog_cloud_history is None and file_id_cloud_history is None:
                     # 在历史记录，名字和摘要都不存在，下载新文件
                     self.tasks.set_data(ops_constants['DOWNLOAD_FILE'],
                                         next_cloud_path, next_local_path)
-                elif catalog_local_history is None and file_id_cloud_history is not None:
+                elif catalog_cloud_history is None and file_id_cloud_history is not None:
                     # 历史记录中不存在此目录名，但存在相同摘要，则且云端最新，则重命名本地文件
                     self.tasks.set_data(ops_constants['RENAME_LOCAL_FILE'],
                                         local_path + file_id_cloud_history.filename[len(cloud_path):], next_local_path)
-                elif catalog_local_history is not None \
-                        and catalog_local_history.hash_value != catalog_cloud.hash_value \
-                        and catalog_cloud.mtime > catalog_local_history.mtime:
+                elif catalog_cloud_history is not None \
+                        and catalog_cloud_history.hash_value != catalog_cloud.hash_value:
                     # 历史记录中存在此文件名，此历史文件与本地文件摘要值不相同，且云端最新，则更新本地文件
                     self.tasks.set_data(ops_constants['UPDATE_LOCAL_FILE'],
                                         next_cloud_path, next_local_path)
