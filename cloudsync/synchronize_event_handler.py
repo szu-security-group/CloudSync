@@ -25,7 +25,7 @@ class SynchronizeEventHandler:
         to_path = self.to_path if to_path is None else to_path
         logger.info('准备将本地文件夹 {from_path} 上传到云端文件夹 {to_path}'.format(from_path=from_path, to_path=to_path))
 
-        # check if the cloud folder exits
+        # check if the cloud folder exist
         if self.cfs.stat_file(to_path) is not None:
             return
 
@@ -56,7 +56,7 @@ class SynchronizeEventHandler:
         to_path = self.to_path if to_path is None else to_path
         logger.info('准备将云端文件夹 {from_path} 下载到本地文件夹 {to_path}'.format(from_path=from_path, to_path=to_path))
 
-        # check if the local folder exits
+        # check if the local folder exist
         if os.path.exists(to_path):
             return
 
@@ -85,7 +85,7 @@ class SynchronizeEventHandler:
         from_path = self.from_path if from_path is None else from_path
         to_path = self.to_path if to_path is None else to_path
 
-        # check if the cloud file exits
+        # check if the cloud file exist
         if self.cfs.stat_file(to_path) is not None:
             return
 
@@ -105,7 +105,7 @@ class SynchronizeEventHandler:
         from_path = self.from_path if from_path is None else from_path
         to_path = self.to_path if to_path is None else to_path
 
-        # check if the local file exits
+        # check if the local file exist
         if os.path.exists(to_path):
             return
 
@@ -123,7 +123,7 @@ class SynchronizeEventHandler:
                                    .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
         cloud_path = self.from_path
 
-        # check if the cloud file exits
+        # check if the cloud file exist
         if self.cfs.stat_file(cloud_path) is None:
             return
 
@@ -141,7 +141,7 @@ class SynchronizeEventHandler:
                                    .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
         local_path = self.from_path
 
-        # check if the local file exits
+        # check if the local file exist
         if not os.path.exists(local_path):
             return
 
@@ -160,7 +160,7 @@ class SynchronizeEventHandler:
                                    .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
         cloud_path = self.from_path if cloud_path is None else cloud_path
 
-        # check if the cloud folder exits
+        # check if the cloud folder exist
         if self.cfs.stat_file(cloud_path) is None:
             return
 
@@ -187,7 +187,7 @@ class SynchronizeEventHandler:
                                    .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
         local_path = self.from_path if local_path is None else local_path
 
-        # check if the local folder exits
+        # check if the local folder exist
         if not os.path.exists(local_path):
             return
 
@@ -240,7 +240,7 @@ class SynchronizeEventHandler:
         from_path = self.from_path
         to_path = self.to_path
 
-        # check if the cloud file exits
+        # check if the cloud file exist
         if self.cfs.stat_file(from_path) is None:
             return
 
@@ -259,7 +259,7 @@ class SynchronizeEventHandler:
         from_path = self.from_path
         to_path = self.to_path
 
-        # check if the local file exits
+        # check if the local file exist
         if not os.path.exists(from_path):
             return
 
@@ -278,7 +278,7 @@ class SynchronizeEventHandler:
         from_path = self.from_path
         to_path = self.to_path
 
-        # check if the cloud folder exits
+        # check if the cloud folder exist
         if self.cfs.stat_file(from_path) is None:
             return
 
@@ -297,7 +297,7 @@ class SynchronizeEventHandler:
         from_path = self.from_path
         to_path = self.to_path
 
-        # check if the local folder exits
+        # check if the local folder exist
         if not os.path.exists(from_path):
             return
 
