@@ -222,7 +222,7 @@ class SynchronizeEventHandler:
             else:
                 logger.info('发现本地文件 {filename}'.format(filename=filename))
                 os.remove(filename)
-        os.removedirs(local_path)
+        os.rmdir(local_path)
         logger.info('删除本地文件夹 {local_path} 完成'.format(local_path=local_path))
 
     def update_cloud_file(self):
