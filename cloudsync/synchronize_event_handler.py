@@ -25,8 +25,12 @@ class SynchronizeEventHandler:
         to_path = self.to_path if to_path is None else to_path
         logger.info('准备将本地文件夹 {from_path} 上传到云端文件夹 {to_path}'.format(from_path=from_path, to_path=to_path))
 
-        # check if the cloud folder exist
+        # check if folders exist
+        if not os.path.exists(from_path):
+            logger.warning('本地不存在文件夹 {from_path}，操作中止', from_path=from_path)
+            return
         if self.cfs.stat_file(to_path) is not None:
+            logger.warning('云端已存在文件夹 {to_path}，操作中止', to_path=to_path)
             return
 
         # create folder
@@ -56,8 +60,12 @@ class SynchronizeEventHandler:
         to_path = self.to_path if to_path is None else to_path
         logger.info('准备将云端文件夹 {from_path} 下载到本地文件夹 {to_path}'.format(from_path=from_path, to_path=to_path))
 
-        # check if the local folder exist
+        # check if folders exist
+        if self.cfs.stat_file(from_path) is None:
+            logger.warning('云端不存在文件夹 {from_path}，操作中止', from_path=from_path)
+            return
         if os.path.exists(to_path):
+            logger.warning('本地已存在文件夹 {to_path}，操作中止', to_path=to_path)
             return
 
         # create folder
@@ -85,8 +93,12 @@ class SynchronizeEventHandler:
         from_path = self.from_path if from_path is None else from_path
         to_path = self.to_path if to_path is None else to_path
 
-        # check if the cloud file exist
+        # check if files exist
+        if not os.path.exists(from_path):
+            logger.warning('本地不存在文件 {from_path}，操作中止', from_path=from_path)
+            return
         if self.cfs.stat_file(to_path) is not None:
+            logger.warning('云端已存在文件 {to_path}，操作中止', to_path=to_path)
             return
 
         # upload file
@@ -105,8 +117,12 @@ class SynchronizeEventHandler:
         from_path = self.from_path if from_path is None else from_path
         to_path = self.to_path if to_path is None else to_path
 
-        # check if the local file exist
+        # check if files exist
+        if self.cfs.stat_file(from_path) is None:
+            logger.warning('云端不存在文件 {from_path}，操作中止', from_path=from_path)
+            return
         if os.path.exists(to_path):
+            logger.warning('本地已存在文件 {to_path}，操作中止', to_path=to_path)
             return
 
         # download file
@@ -123,8 +139,9 @@ class SynchronizeEventHandler:
                                    .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
         cloud_path = self.from_path
 
-        # check if the cloud file exist
+        # check if the cloud file exists
         if self.cfs.stat_file(cloud_path) is None:
+            logger.warning('云端不存在文件 {cloud_path}，操作中止', cloud_path=cloud_path)
             return
 
         # delete file
@@ -141,8 +158,9 @@ class SynchronizeEventHandler:
                                    .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
         local_path = self.from_path
 
-        # check if the local file exist
+        # check if the local file exists
         if not os.path.exists(local_path):
+            logger.warning('本地不存在文件 {local_path}，操作中止', local_path=local_path)
             return
 
         # delete file
@@ -160,8 +178,9 @@ class SynchronizeEventHandler:
                                    .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
         cloud_path = self.from_path if cloud_path is None else cloud_path
 
-        # check if the cloud folder exist
+        # check if the cloud folder exists
         if self.cfs.stat_file(cloud_path) is None:
+            logger.warning('云端不存在文件夹 {cloud_path}，操作中止', cloud_path=cloud_path)
             return
 
         # delete folder
@@ -187,8 +206,9 @@ class SynchronizeEventHandler:
                                    .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
         local_path = self.from_path if local_path is None else local_path
 
-        # check if the local folder exist
+        # check if the local folder exists
         if not os.path.exists(local_path):
+            logger.warning('本地不存在文件夹 {local_path}，操作中止', local_path=local_path)
             return
 
         # delete folder
@@ -240,8 +260,12 @@ class SynchronizeEventHandler:
         from_path = self.from_path
         to_path = self.to_path
 
-        # check if the cloud file exist
+        # check if the cloud files exist
         if self.cfs.stat_file(from_path) is None:
+            logger.warning('云端不存在文件 {from_path}，操作中止', from_path=from_path)
+            return
+        if self.cfs.stat_file(to_path) is not None:
+            logger.warning('云端已存在文件 {to_path}，操作中止', to_path=to_path)
             return
 
         # rename file
@@ -259,8 +283,12 @@ class SynchronizeEventHandler:
         from_path = self.from_path
         to_path = self.to_path
 
-        # check if the local file exist
+        # check if the local files exist
         if not os.path.exists(from_path):
+            logger.warning('本地不存在文件 {from_path}，操作中止', from_path=from_path)
+            return
+        if os.path.exists(to_path):
+            logger.warning('本地已存在文件 {to_path}，操作中止', to_path=to_path)
             return
 
         # rename file
@@ -278,8 +306,12 @@ class SynchronizeEventHandler:
         from_path = self.from_path
         to_path = self.to_path
 
-        # check if the cloud folder exist
+        # check if the cloud folders exist
         if self.cfs.stat_file(from_path) is None:
+            logger.warning('云端不存在文件夹 {from_path}，操作中止', from_path=from_path)
+            return
+        if self.cfs.stat_file(to_path) is not None:
+            logger.warning('云端已存在文件夹 {to_path}，操作中止', to_path=to_path)
             return
 
         # rename folder
@@ -297,8 +329,12 @@ class SynchronizeEventHandler:
         from_path = self.from_path
         to_path = self.to_path
 
-        # check if the local folder exist
+        # check if the local folders exist
         if not os.path.exists(from_path):
+            logger.warning('本地不存在文件夹 {from_path}，操作中止', from_path=from_path)
+            return
+        if os.path.exists(to_path):
+            logger.warning('本地已存在文件夹 {to_path}，操作中止', to_path=to_path)
             return
 
         # rename folder
