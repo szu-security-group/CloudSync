@@ -5,7 +5,7 @@ import logging
 import inspect
 
 import utils
-from cos_config import ops_constants
+from cos_config import OP
 from catalog import Catalog, DirectoryStatus, FileStatus, initialize_metatree_cloud, initialize_metatree_local
 from cfs import CloudFileSystem
 from synchronize_event_emitter import SynchronizeEventEmitter
@@ -254,11 +254,11 @@ class Synchronize:
                                         next_cloud_path, next_local_path)
                 # 在本地历史中利用文件名和文件ID都找不到记录，上传此云目录
                 if catalog_local_history is None and file_id_local_history is None:
-                    self.tasks.set_data(ops_constants['CREATE_CLOUD_FOLDER'],
+                    self.tasks.set_data(OP.CREATE_CLOUD_FOLDER,
                                         next_local_path, next_cloud_path)
                 # 在本地历史中利用名字找不到记录，但可以根据文件ID找到，重命名此云目录
                 if catalog_local_history is None and file_id_local_history is not None:
-                    self.tasks.set_data(ops_constants['RENAME_CLOUD_FOLDER'],
+                    self.tasks.set_data(OP.RENAME_CLOUD_FOLDER,
                                         cloud_path + file_id_local_history.filename[len(local_path):], next_cloud_path)
             elif catalog_local.file_type == Catalog.IS_FILE:
                 logger.debug('当前项为文件')
@@ -272,16 +272,16 @@ class Synchronize:
 
                 # 在历史记录，名字和摘要都不存在，上传新文件
                 if catalog_local_history is None and file_id_local_history is None:
-                    self.tasks.set_data(ops_constants['UPLOAD_FILE'],
+                    self.tasks.set_data(OP.UPLOAD_FILE,
                                         next_local_path, next_cloud_path)
                 # 历史记录中不存在此目录名，但存在相同摘要，且本地最新，则重命名云端文件
                 elif catalog_local_history is None and file_id_local_history is not None:
-                    self.tasks.set_data(ops_constants['RENAME_CLOUD_FILE'],
+                    self.tasks.set_data(OP.RENAME_CLOUD_FILE,
                                         cloud_path + file_id_local_history.filename[len(local_path):], next_cloud_path)
                 # 历史记录中存在此文件名，此历史文件与本地文件摘要值不相同，且本地最新，则更新云端文件
                 elif catalog_local_history is not None \
                         and catalog_local_history.hash_value != catalog_local.hash_value:
-                    self.tasks.set_data(ops_constants['UPDATE_CLOUD_FILE'],
+                    self.tasks.set_data(OP.UPDATE_CLOUD_FILE,
                                         next_local_path, next_cloud_path)
             logger.debug('当前项 {filename} 处理完毕'.format(filename=filename))
         # 删除部分
@@ -301,9 +301,9 @@ class Synchronize:
             file_id_local = local.find_catalog(catalog_local_history.file_id)
             logger.debug('查找结果 file_id_local 为 {}'.format(file_id_local))
             if catalog_local_history.file_type == Catalog.IS_FOLDER and catalog_local is None and file_id_local is None:
-                self.tasks.set_data(ops_constants['DELETE_CLOUD_FOLDER'], next_cloud_path)
+                self.tasks.set_data(OP.DELETE_CLOUD_FOLDER, next_cloud_path)
             elif catalog_local_history.file_type == Catalog.IS_FILE and catalog_local is None and file_id_local is None:
-                self.tasks.set_data(ops_constants['DELETE_CLOUD_FILE'], next_cloud_path)
+                self.tasks.set_data(OP.DELETE_CLOUD_FILE, next_cloud_path)
             logger.debug('当前项 {filename} 处理完毕'.format(filename=filename))
 
     def algorithm_pull(self, cloud, cloud_history, local, local_history, cloud_path, local_path):
@@ -355,11 +355,11 @@ class Synchronize:
                                         next_cloud_path, next_local_path)
                 # 在云端历史中利用文件名和文件ID都找不到记录，创建此本地目录
                 if catalog_cloud_history is None and file_id_cloud_history is None:
-                    self.tasks.set_data(ops_constants['CREATE_LOCAL_FOLDER'],
+                    self.tasks.set_data(OP.CREATE_LOCAL_FOLDER,
                                         next_cloud_path, next_local_path)
                 # 在云端历史中利用名字找不到记录，但可以根据文件ID找到，重命名此本地目录
                 if catalog_cloud_history is None and file_id_cloud_history is not None:
-                    self.tasks.set_data(ops_constants['RENAME_LOCAL_FOLDER'],
+                    self.tasks.set_data(OP.RENAME_LOCAL_FOLDER,
                                         local_path + file_id_cloud_history.filename[len(cloud_path):], next_local_path)
             elif catalog_cloud.file_type == Catalog.IS_FILE:
                 logger.debug('当前项为文件')
@@ -373,16 +373,16 @@ class Synchronize:
 
                 # 在历史记录，名字和摘要都不存在，下载新文件
                 if catalog_cloud_history is None and file_id_cloud_history is None:
-                    self.tasks.set_data(ops_constants['DOWNLOAD_FILE'],
+                    self.tasks.set_data(OP.DOWNLOAD_FILE,
                                         next_cloud_path, next_local_path)
                 # 历史记录中不存在此目录名，但存在相同摘要，则且云端最新，则重命名本地文件
                 elif catalog_cloud_history is None and file_id_cloud_history is not None:
-                    self.tasks.set_data(ops_constants['RENAME_LOCAL_FILE'],
+                    self.tasks.set_data(OP.RENAME_LOCAL_FILE,
                                         local_path + file_id_cloud_history.filename[len(cloud_path):], next_local_path)
                 # 历史记录中存在此文件名，此历史文件与本地文件摘要值不相同，且云端最新，则更新本地文件
                 elif catalog_cloud_history is not None \
                         and catalog_cloud_history.hash_value != catalog_cloud.hash_value:
-                    self.tasks.set_data(ops_constants['UPDATE_LOCAL_FILE'],
+                    self.tasks.set_data(OP.UPDATE_LOCAL_FILE,
                                         next_cloud_path, next_local_path)
             logger.debug('当前项 {filename} 处理完毕'.format(filename=filename))
         # 删除部分
@@ -402,7 +402,7 @@ class Synchronize:
             file_id_cloud = cloud.find_catalog(catalog_cloud_history.file_id)
             logger.debug('查找结果 file_id_cloud 为 {}'.format(file_id_cloud))
             if catalog_cloud_history.file_type == Catalog.IS_FOLDER and catalog_cloud is None and file_id_cloud is None:
-                self.tasks.set_data(ops_constants['DELETE_LOCAL_FOLDER'], next_local_path)
+                self.tasks.set_data(OP.DELETE_LOCAL_FOLDER, next_local_path)
             elif catalog_cloud_history.file_type == Catalog.IS_FILE and catalog_cloud is None and file_id_cloud is None:
-                self.tasks.set_data(ops_constants['DELETE_LOCAL_FILE'], next_local_path)
+                self.tasks.set_data(OP.DELETE_LOCAL_FILE, next_local_path)
             logger.debug('当前项 {filename} 处理完毕'.format(filename=filename))

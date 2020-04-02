@@ -2,7 +2,7 @@ import os
 import logging
 import inspect
 
-from cos_config import ops_constants
+from cos_config import OP
 from synchronize_event_emitter import SynchronizeEventEmitter
 
 
@@ -354,33 +354,19 @@ class SynchronizeEventHandler:
         logger.debug('任务编号: {task_index}, 参数列表: [\'{from_path}\', \'{to_path}\'], 将执行编号对应操作'
                      .format(task_index=task_index, from_path=self.from_path, to_path=self.to_path))
 
-        if task_index == ops_constants['CREATE_CLOUD_FOLDER']:
-            self.create_cloud_folder()
-        elif task_index == ops_constants['CREATE_LOCAL_FOLDER']:
-            self.create_local_folder()
-        elif task_index == ops_constants['UPLOAD_FILE']:
-            self.upload()
-        elif task_index == ops_constants['DELETE_CLOUD_FILE']:
-            self.delete_cloud_file()
-        elif task_index == ops_constants['DELETE_LOCAL_FILE']:
-            self.delete_local_file()
-        elif task_index == ops_constants['DELETE_CLOUD_FOLDER']:
-            self.delete_cloud_folder()
-        elif task_index == ops_constants['DELETE_LOCAL_FOLDER']:
-            self.delete_local_folder()
-        elif task_index == ops_constants['UPDATE_CLOUD_FILE']:
-            self.update_cloud_file()
-        elif task_index == ops_constants['UPDATE_LOCAL_FILE']:
-            self.update_local_file()
-        elif task_index == ops_constants['RENAME_CLOUD_FILE']:
-            self.rename_cloud_file()
-        elif task_index == ops_constants['RENAME_LOCAL_FILE']:
-            self.rename_local_file()
-        elif task_index == ops_constants['DOWNLOAD_FILE']:
-            self.download()
-        elif task_index == ops_constants['RENAME_CLOUD_FOLDER']:
-            self.rename_cloud_folder()
-        elif task_index == ops_constants['RENAME_LOCAL_FOLDER']:
-            self.rename_local_folder()
-        else:
-            logger.error('未知的任务编号: {task_index} !'.format(task_index=task_index))
+        {
+            OP.CREATE_CLOUD_FOLDER: self.create_cloud_folder,
+            OP.CREATE_LOCAL_FOLDER: self.create_local_folder,
+            OP.UPLOAD_FILE: self.upload,
+            OP.DELETE_CLOUD_FILE: self.delete_cloud_file,
+            OP.DELETE_LOCAL_FILE: self.delete_local_file,
+            OP.DELETE_CLOUD_FOLDER: self.delete_cloud_folder,
+            OP.DELETE_LOCAL_FOLDER: self.delete_local_folder,
+            OP.UPDATE_CLOUD_FILE: self.update_cloud_file,
+            OP.UPDATE_LOCAL_FILE: self.update_local_file,
+            OP.RENAME_CLOUD_FILE: self.rename_cloud_file,
+            OP.RENAME_LOCAL_FILE: self.rename_local_file,
+            OP.DOWNLOAD_FILE: self.download,
+            OP.RENAME_CLOUD_FOLDER: self.rename_cloud_folder,
+            OP.RENAME_LOCAL_FOLDER: self.rename_local_folder
+        }[task_index]()
