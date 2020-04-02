@@ -223,7 +223,7 @@ class Synchronize:
                                    .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
         # 新增、重命名、修改部分
         logger.debug('遍历本地元信息树的每一项，判断是否需要进行同步操作')
-        for catalog_local in local.child:
+        for catalog_local in local.children:
             filename = catalog_local.filename
             hash_value = catalog_local.hash_value
             next_local_path = local_path + filename[len(local_path):]
@@ -288,7 +288,7 @@ class Synchronize:
         if local_history is None:
             return
         logger.debug('遍历本地元信息树的每一项，判断是否需要进行本地删除操作')
-        for catalog_local_history in local_history.child:
+        for catalog_local_history in local_history.children:
             filename = catalog_local_history.filename
             next_local_path = local_path + filename[len(local_path):]
             next_cloud_path = cloud_path + filename[len(local_path):]
@@ -324,7 +324,7 @@ class Synchronize:
                                    .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
         # 新增、重命名、修改部分
         logger.debug('遍历云端元信息树的每一项，判断是否需要进行同步操作')
-        for catalog_cloud in cloud.child:
+        for catalog_cloud in cloud.children:
             filename = catalog_cloud.filename
             hash_value = catalog_cloud.hash_value
             next_local_path = local_path + filename[len(cloud_path):]
@@ -389,7 +389,7 @@ class Synchronize:
         if cloud_history is None:
             return
         logger.debug('遍历云端元信息树的每一项，判断是否需要进行云端删除操作')
-        for catalog_cloud_history in cloud_history.child:
+        for catalog_cloud_history in cloud_history.children:
             filename = catalog_cloud_history.filename
             next_local_path = local_path + filename[len(cloud_path):]
             next_cloud_path = cloud_path + filename[len(cloud_path):]

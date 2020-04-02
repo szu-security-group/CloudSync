@@ -50,7 +50,7 @@ def get_entire_local_directory_hash(directory):
     :return: 文件摘要
     """
     files_hash_value = ''
-    for child in directory.child:
+    for child in directory.children:
         if child.file_type == Catalog.IS_FOLDER:
             files_hash_value += get_entire_local_directory_hash(child)
         else:
@@ -68,7 +68,7 @@ def get_entire_cloud_directory_hash(directory, cfs):
     :return: 文件摘要
     """
     files_hash_value = ''
-    for child in directory.child:
+    for child in directory.children:
         if child.file_type == Catalog.IS_FOLDER:
             files_hash_value += get_entire_cloud_directory_hash(child, cfs)
         else:

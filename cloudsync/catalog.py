@@ -45,10 +45,10 @@ class DirectoryStatus(Catalog):
     """
     存储文件夹元信息的结构
     """
-    def __init__(self, filename, hash_value=None, mtime=None, file_id=None, child=None):
+    def __init__(self, filename, hash_value=None, mtime=None, file_id=None, children=None):
         filename += '/' if not filename.endswith('/') else ''
         super().__init__(filename, Catalog.IS_FOLDER, hash_value, mtime, file_id)
-        self.child = child if child is not None else SortedList([])
+        self.children = children if children is not None else SortedList([])
 
     def insert(self, catalog):
         """
@@ -56,8 +56,8 @@ class DirectoryStatus(Catalog):
         :param catalog: 文件(夹)结构
         :return: None
         """
-        if catalog not in self.child:
-            self.child.add(catalog)
+        if catalog not in self.children:
+            self.children.add(catalog)
 
     def remove(self, filename):
         """
@@ -68,9 +68,9 @@ class DirectoryStatus(Catalog):
         if isinstance(filename, Catalog):
             filename = filename.filename
         filename = str(filename)
-        for catalog in self.child.__iter__():
+        for catalog in self.children.__iter__():
             if catalog.filename == filename:
-                self.child.remove(catalog)
+                self.children.remove(catalog)
 
     def find_catalog(self, obj):
         """
@@ -79,7 +79,7 @@ class DirectoryStatus(Catalog):
         :return: 文件(夹)结构
         """
         obj = str(obj)
-        for catalog in self.child.__iter__():
+        for catalog in self.children.__iter__():
             if obj in [catalog.filename, catalog.hash_value, catalog.file_id]:
                 return catalog
         return None
@@ -150,10 +150,10 @@ def initialize_metatree_local(local_path):
                 logger.debug('获取本地文件的修改时间成功')
             except Exception as err:
                 logger.exception('获取本地文件的修改时间失败, 错误信息为: {err}'.format(err=err))
-            subfile = FileStatus(filename, mtime=mtime, file_id=file_id)
-            root.insert(subfile)
+            child_file = FileStatus(filename, mtime=mtime, file_id=file_id)
+            root.insert(child_file)
             logger.info('将子文件 {filename} 的文件状态插入到当前目录 {local_path}'.format(filename=filename, local_path=local_path))
-            logger.debug('子文件 {filename} 的文件状态为: {subfile}'.format(filename=filename, subfile=subfile))
+            logger.debug('子文件 {filename} 的文件状态为: {child_file}'.format(filename=filename, child_file=child_file))
         else:
             logger.error('未知的的文件: {filename}'.format(filename=filename))
     logger.info('构建以 {local_path} 为根的目录状态(本地元信息树) 完成'.format(local_path=local_path))
@@ -204,9 +204,9 @@ def initialize_metatree_cloud(cloud_path, cfs):
                 logger.debug('获取云端文件的修改时间成功')
             except Exception as err:
                 logger.exception('获取云端文件的修改时间失败, 错误信息为: {err}'.format(err=err))
-            subfile = FileStatus(filename, mtime=mtime, file_id=file_id)
-            root.insert(subfile)
+            child_file = FileStatus(filename, mtime=mtime, file_id=file_id)
+            root.insert(child_file)
             logger.info('将子文件 {filename} 的文件状态插入到当前目录 {cloud_path}'.format(filename=filename, cloud_path=cloud_path))
-            logger.debug('子文件 {filename} 的文件状态为: {subfile}'.format(filename=filename, subfile=subfile))
+            logger.debug('子文件 {filename} 的文件状态为: {child_file}'.format(filename=filename, child_file=child_file))
     logger.info('构建以 {cloud_path} 为根的目录状态(云端元信息树) 完成'.format(cloud_path=cloud_path))
     return root
