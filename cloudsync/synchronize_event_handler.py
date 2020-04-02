@@ -14,9 +14,9 @@ class SynchronizeEventHandler:
 
     def create_cloud_folder(self, from_path=None, to_path=None):
         """
-        上传到云端一个目录
-        :param from_path:
-        :param to_path:
+        上传本地目录到云端
+        :param from_path: 本地目录路径
+        :param to_path: 云端目录路径
         :return: None
         """
         logger = logging.getLogger('{class_name} -> {function_name}'
@@ -49,9 +49,9 @@ class SynchronizeEventHandler:
 
     def create_local_folder(self, from_path=None, to_path=None):
         """
-        下载到本地一个目录
-        :param from_path:
-        :param to_path:
+        下载云端目录到本地
+        :param from_path: 云端目录路径
+        :param to_path: 本地目录路径
         :return: None
         """
         logger = logging.getLogger('{class_name} -> {function_name}'
@@ -83,9 +83,9 @@ class SynchronizeEventHandler:
 
     def upload(self, from_path=None, to_path=None):
         """
-        上传文件
-        :param from_path:
-        :param to_path:
+        上传本地文件到云端
+        :param from_path: 本地文件路径
+        :param to_path: 云端文件路径
         :return: None
         """
         logger = logging.getLogger('{class_name} -> {function_name}'
@@ -108,8 +108,9 @@ class SynchronizeEventHandler:
 
     def download(self, from_path=None, to_path=None):
         """
-        :param from_path:
-        :param to_path:
+        下载云端文件到本地
+        :param from_path: 云端文件路径
+        :param to_path: 本地文件路径
         :return: None
         """
         logger = logging.getLogger('{class_name} -> {function_name}'
@@ -171,7 +172,7 @@ class SynchronizeEventHandler:
     def delete_cloud_folder(self, cloud_path=None):
         """
         删除云端目录
-        :param cloud_path:
+        :param cloud_path: 云端目录路径
         :return: None
         """
         logger = logging.getLogger('{class_name} -> {function_name}'
@@ -199,7 +200,7 @@ class SynchronizeEventHandler:
     def delete_local_folder(self, local_path=None):
         """
         删除本地目录
-        :param local_path:
+        :param local_path: 本地目录路径
         :return: None
         """
         logger = logging.getLogger('{class_name} -> {function_name}'

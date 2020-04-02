@@ -9,6 +9,11 @@ class CloudFileSystem:
     }
 
     def __init__(self, csp_):
+        """
+        加载与指定的云存储提供商对应的云文件系统函数
+        :param csp_: 云存储提供商的名字。
+                     云文件系统函数的文件名需符合 cfs_<csp>.py 这个格式，云存储提供商的名字则为中间的 csp
+        """
         self.csp = csp_
         if not os.path.exists('cfs_{csp}.py'.format(csp=self.csp)):
             # todo: 报个警

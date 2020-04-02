@@ -40,9 +40,9 @@ class Synchronize:
 
     def start(self):
         """
-        启动同步功能，包括步骤初始化目录结构、同步Push和Pull算法、保存历史信息；
+        启动同步功能，包括步骤初始化目录结构、同步 PULL 和 PUSH 算法、保存历史信息；
         可通过自定义输入提示关闭此同步功能
-        :return:
+        :return: None
         """
         logger = logging.getLogger('{class_name} -> {function_name}'
                                    .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
@@ -73,7 +73,7 @@ class Synchronize:
         """
         初始化历史记录、本地目录、云端目录的结构缓存的方法；如果历史记录文件不存在，
         则视为首次运行，历史记录结构为只有根目录的树；历史文件将会直接影响到文件的唯一状态信息。
-        :return:
+        :return: None
         """
         logger = logging.getLogger('{class_name} -> {function_name}'
                                    .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
@@ -132,8 +132,8 @@ class Synchronize:
 
     def synchronize(self):
         """
-        同步本地和云端指定的目录 包括算法 AlgorithmPUSH | AlgorithmPULL
-        :return:
+        同步本地和云端指定的目录 包括算法 AlgorithmPULL | AlgorithmPUSH
+        :return: None
         """
         logger = logging.getLogger('{class_name} -> {function_name}'
                                    .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
@@ -142,8 +142,6 @@ class Synchronize:
                             self.metatree_local, self.metatree_local_history,
                             self.cloud_path, self.local_path)
         logger.info('PULL 算法运行结束')
-        # if self.update_and_validate():
-        #     return
         logger.info('开始运行 PUSH 算法')
         self.algorithm_push(self.metatree_cloud, self.metatree_cloud_history,
                             self.metatree_local, self.metatree_local_history,
@@ -187,8 +185,8 @@ class Synchronize:
 
     def save_history(self):
         """
-        历史记录存到磁盘中
-        :return:
+        将云端历史树以及本地历史树保存到磁盘中
+        :return: None
         """
         logger = logging.getLogger('{class_name} -> {function_name}'
                                    .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
@@ -223,6 +221,7 @@ class Synchronize:
         """
         logger = logging.getLogger('{class_name} -> {function_name}'
                                    .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
+        # 新增、重命名、修改部分
         logger.debug('遍历本地元信息树的每一项，判断是否需要进行同步操作')
         for catalog_local in local.child:
             filename = catalog_local.filename
@@ -285,6 +284,7 @@ class Synchronize:
                     self.tasks.set_data(ops_constants['UPDATE_CLOUD_FILE'],
                                         next_local_path, next_cloud_path)
             logger.debug('当前项 {filename} 处理完毕'.format(filename=filename))
+        # 删除部分
         if local_history is None:
             return
         logger.debug('遍历本地元信息树的每一项，判断是否需要进行本地删除操作')
@@ -322,6 +322,7 @@ class Synchronize:
         """
         logger = logging.getLogger('{class_name} -> {function_name}'
                                    .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
+        # 新增、重命名、修改部分
         logger.debug('遍历云端元信息树的每一项，判断是否需要进行同步操作')
         for catalog_cloud in cloud.child:
             filename = catalog_cloud.filename
@@ -384,6 +385,7 @@ class Synchronize:
                     self.tasks.set_data(ops_constants['UPDATE_LOCAL_FILE'],
                                         next_cloud_path, next_local_path)
             logger.debug('当前项 {filename} 处理完毕'.format(filename=filename))
+        # 删除部分
         if cloud_history is None:
             return
         logger.debug('遍历云端元信息树的每一项，判断是否需要进行云端删除操作')

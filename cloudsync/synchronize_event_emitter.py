@@ -16,6 +16,11 @@ class SynchronizeEventEmitter:
         self.to_path = ''
 
     def register(self, observer):
+        """
+        将观察者注册到观察者列表中
+        :param observer: 观察者
+        :return: None
+        """
         logger = logging.getLogger('{class_name} -> {function_name}'
                                    .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
         logger.info('观察者 {observer} 准备绑定到被观察者'.format(observer=observer))
@@ -26,6 +31,11 @@ class SynchronizeEventEmitter:
             logger.warning('绑定失败！观察者 {observer} 已存在于观察者列表中'.format(observer=observer))
 
     def unregister(self, observer):
+        """
+        将观察者从观察者列表中移除
+        :param observer: 观察者
+        :return: None
+        """
         logger = logging.getLogger('{class_name} -> {function_name}'
                                    .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
         logger.info('观察者 {observer} 准备从被观察者中解绑'.format(observer=observer))
@@ -36,6 +46,10 @@ class SynchronizeEventEmitter:
             logger.warning('解绑失败！观察者 {observer} 不存在于观察者列表中'.format(observer=observer))
 
     def notify(self):
+        """
+        通知观察者列表中的观察者
+        :return: None
+        """
         logger = logging.getLogger('{class_name} -> {function_name}'
                                    .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
         logger.info('被观察者将通知所有已注册的观察者')
@@ -45,6 +59,12 @@ class SynchronizeEventEmitter:
         logger.info('通知完毕')
 
     def set_data(self, task_index, *args):
+        """
+        更新被观察者的数据，并调用 notify() 更新观察者
+        :param task_index: 任务序号
+        :param args: 观察者执行参数， 1~2个
+        :return: None
+        """
         logger = logging.getLogger('{class_name} -> {function_name}'
                                    .format(class_name=__class__.__name__,
                                            function_name=inspect.stack()[0].function))

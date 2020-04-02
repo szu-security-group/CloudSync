@@ -42,16 +42,29 @@ class Catalog:
 
 
 class DirectoryStatus(Catalog):
+    """
+    存储文件夹元信息的结构
+    """
     def __init__(self, filename, hash_value=None, mtime=None, file_id=None, child=None):
         filename += '/' if not filename.endswith('/') else ''
         super().__init__(filename, Catalog.IS_FOLDER, hash_value, mtime, file_id)
         self.child = child if child is not None else SortedList([])
 
     def insert(self, catalog):
+        """
+        将文件(夹)结构插入该文件夹的子文件列表中
+        :param catalog: 文件(夹)结构
+        :return: None
+        """
         if catalog not in self.child:
             self.child.add(catalog)
 
     def remove(self, filename):
+        """
+        将文件(夹)结构从该文件夹的子文件列表中移除
+        :param filename: 文件(夹)结构 或 文件(夹)的名字
+        :return: None
+        """
         if isinstance(filename, Catalog):
             filename = filename.filename
         filename = str(filename)
@@ -59,12 +72,15 @@ class DirectoryStatus(Catalog):
             if catalog.filename == filename:
                 self.child.remove(catalog)
 
-    def find_catalog(self, obj, number=1):
+    def find_catalog(self, obj):
+        """
+        根据 obj 在子文件列表中查找文件(夹)
+        :param obj: 子文件(夹)的 文件名 或 散列值 或 文件ID
+        :return: 文件(夹)结构
+        """
         obj = str(obj)
         for catalog in self.child.__iter__():
             if obj in [catalog.filename, catalog.hash_value, catalog.file_id]:
-                number -= 1
-            if number == 0:
                 return catalog
         return None
 
@@ -77,6 +93,9 @@ class DirectoryStatus(Catalog):
 
 
 class FileStatus(Catalog):
+    """
+    存储文件元信息的结构
+    """
     def __init__(self, filename, hash_value=None, mtime=None, file_id=None):
         super().__init__(filename, Catalog.IS_FILE, hash_value, mtime, file_id)
 
@@ -90,6 +109,11 @@ class FileStatus(Catalog):
 
 
 def initialize_metatree_local(local_path):
+    """
+    初始化本地元信息树
+    :param local_path: 元信息树的根目录
+    :return: 以 local_path 为根的元信息树
+    """
     logger = logging.getLogger('{function_name}'.format(function_name=inspect.stack()[0].function))
     logger.info('构建以 {local_path} 为根的目录状态(本地元信息树)'.format(local_path=local_path))
     # 构建该目录的目录状态
@@ -137,6 +161,12 @@ def initialize_metatree_local(local_path):
 
 
 def initialize_metatree_cloud(cloud_path, cfs):
+    """
+    初始化云端元信息树
+    :param cloud_path: 元信息树的根目录
+    :param cfs: 云文件系统，包含 stat_file 等函数
+    :return: 以 cloud_path 为根的元信息树
+    """
     logger = logging.getLogger('{function_name}'.format(function_name=inspect.stack()[0].function))
     logger.info('构建以 {cloud_path} 为根的目录状态(云端元信息树)'.format(cloud_path=cloud_path))
     # 构建该目录的目录状态

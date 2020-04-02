@@ -8,7 +8,7 @@ from synchronize import Synchronize
 
 def start_sync(csp):
     """
-    根据 cosp 的名字启动对应的同步程序
+    根据 csp 的名字启动对应的同步程序
     :param csp: COS Service Provider
     :return: None
     """
