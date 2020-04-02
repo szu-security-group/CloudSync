@@ -72,7 +72,7 @@ def get_entire_cloud_directory_hash(directory, cfs):
         if child.file_type == Catalog.IS_FOLDER:
             files_hash_value += get_entire_cloud_directory_hash(child, cfs)
         else:
-            child.hash_value = cfs.get_hash(child.filename)
+            child.hash_value = cfs.stat_file(child.filename)['hash']
             files_hash_value += child.hash_value
     directory.hash_value = get_buffer_hash(files_hash_value.encode())
     return directory.hash_value

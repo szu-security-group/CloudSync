@@ -13,6 +13,10 @@ class CloudFileSystem:
     """
 
     def __init__(self):
+        """
+        初始化云文件系统
+        需要初始化COS客户端，以及指定存储痛
+        """
         oss2.set_stream_logger(level=logging.WARNING)
         oss2.set_file_logger(file_path='cloudsync.log', level=logging.WARNING)
 
@@ -33,10 +37,13 @@ class CloudFileSystem:
     def upload(self, cloud_path, local_path):
         """
         上传文件
-        要求附加自定义属性修改时间 mtime 、摘要 hash
-        :param cloud_path:
-        :param local_path:
-        :return:
+        要求附加自定义属性修改时间 mtime 、摘要 hash 和 文件ID
+        - 修改时间 mtime 使用当前的时间
+        - 摘要 hash 使用选定算法对文件内容计算散列值而得
+        - 文件ID 使用 uuid.uuid1() 函数生成
+        :param cloud_path: 云端文件路径
+        :param local_path: 本地文件路径
+        :return: None
         """
         if local_path.endswith('/'):
             response = self.create_folder(cloud_path)
@@ -64,10 +71,9 @@ class CloudFileSystem:
     def download(self, cloud_path, local_path):
         """
         下载文件
-        如果下载的文件在云端没有附加属性摘要 hash ，要求计算后附加上去
-        :param cloud_path:
-        :param local_path:
-        :return:
+        :param cloud_path: 云端文件路径
+        :param local_path: 本地文件路径
+        :return: None
         """
         import shutil
         response = self._client.get_object(key=cloud_path)
@@ -79,19 +85,22 @@ class CloudFileSystem:
     def delete(self, cloud_path):
         """
         删除文件
-        :param cloud_path:
-        :return:
+        :param cloud_path: 云端文件路径
+        :return: None
         """
         response = self._client.delete_object(key=cloud_path)
         return response
 
     def update(self, cloud_path, local_path):
         """
-        上传文件
-        要求附加自定义属性修改时间 mtime 、摘要 hash
-        :param cloud_path:
-        :param local_path:
-        :return:
+        使用本地文件的内容更新云端文件的内容
+        要求附加自定义属性修改时间 mtime 、摘要 hash 和 文件ID
+        - 修改时间 mtime 使用当前的时间
+        - 摘要 hash 使用选定算法对新本地文件内容计算散列值而得
+        - 文件ID 使用被更新的云端文件的文件ID
+        :param cloud_path: 云端文件路径
+        :param local_path: 本地文件路径
+        :return: None
         """
         import os
         if cloud_path.endswith('/') or not self._client.object_exists(key=cloud_path):
@@ -122,10 +131,11 @@ class CloudFileSystem:
     def rename(self, old_cloud_path: str, new_cloud_path: str):
         """
         重命名文件或目录
+        如果是目录，需要对目录下的所有子文件都重命名
         要求重命名完成后，设置最新的修改时间 mtime
-        :param old_cloud_path:
-        :param new_cloud_path:
-        :return:
+        :param old_cloud_path: 重命名前的云端文件路径
+        :param new_cloud_path: 重命名后的云端文件路径
+        :return: None
         """
         if old_cloud_path.endswith('/'):
             # 对目录下的文件进行递归重命名
@@ -146,9 +156,12 @@ class CloudFileSystem:
     def create_folder(self, cloud_path: str):
         """
         创建一个空目录
-        要求附加最新修改时间 mtime
-        :param cloud_path:
-        :return:
+        要求附加最新修改时间 mtime, 散列值 hash 和 文件ID
+        - 修改时间 mtime 使用当前的时间
+        - 摘要 hash 使用选定算法对空字符串计算散列值而得
+        - 文件ID 使用被更新的云端文件的文件ID
+        :param cloud_path: 云端目录路径
+        :return: None
         """
         # cloud_path 结尾若不是 / , 上传之后不会表现为文件夹
         if not cloud_path.endswith('/'):
@@ -172,9 +185,9 @@ class CloudFileSystem:
     def list_files(self, cloud_path):
         """
         查询子目录和文件
-        要求返回值为子文件名、子目录名所组成的链表
-        :param cloud_path:
-        :return:
+        要求返回值为子目录名、子文件名所组成的数组
+        :param cloud_path: 云端目录路径
+        :return: 由子目录名和子文件名组成的数组
         """
         files = []
         items = oss2.ObjectIterator(self._client, prefix=cloud_path, delimiter='/')
@@ -187,10 +200,11 @@ class CloudFileSystem:
 
     def stat_file(self, cloud_path):
         """
-        查询文件属性
-        要求返回值中，key 至少包括 hash、mtime、uuid
-        :param cloud_path:
-        :return:
+        查询并返回文件元信息
+        若文件不存在，则返回 None
+        若文件元信息存在空值，则设置该文件的此项的元信息
+        :param cloud_path: 云端文件路径
+        :return: None 或 含有文件元信息（包括 hash、mtime、uuid）的字典
         """
         set_stat_flag = False
         try:
@@ -229,60 +243,39 @@ class CloudFileSystem:
 
     def set_stat(self, cloud_path, stat):
         """
-        修改文件属性
+        修改文件元信息
         :param cloud_path: 云端文件路径
-        :param stat: 文件熟悉
-        :return:
+        :param stat: 文件元信息
+        :return: None
         """
         metadata = {
             'x-oss-meta-hash': stat['hash'],
             'x-oss-meta-mtime': stat['mtime'],
             'x-oss-meta-uuid': stat['uuid'],
         }
-        response = self._client.copy_object(source_bucket_name=self._bucket_name,
-                                            source_key=cloud_path,
-                                            target_key=cloud_path,
-                                            headers=metadata)
-        return response
+        self._client.copy_object(source_bucket_name=self._bucket_name,
+                                 source_key=cloud_path,
+                                 target_key=cloud_path,
+                                 headers=metadata)
 
     def set_hash(self, cloud_path, hash_value):
         """
         设置文件摘要 hash
-        :param cloud_path:
-        :param hash_value:
-        :return:
+        :param cloud_path: 云端文件路径
+        :param hash_value: 文件内容摘要
+        :return: None
         """
         stat = self.stat_file(cloud_path)
         stat['hash'] = hash_value
-        response = self.set_stat(cloud_path, stat)
-        return response
-
-    def get_hash(self, cloud_path):
-        """
-        获取文件摘要 hash
-        如果不存在，则读取云文件并计算 hash 值，作为属性附加值附加到云属性中
-        :param cloud_path:
-        :return:
-        """
-        return self.stat_file(cloud_path)['hash']
+        self.set_stat(cloud_path, stat)
 
     def set_mtime(self, cloud_path, mtime):
         """
         设置最近修改时间，单位为毫秒
-        :param cloud_path:
-        :param mtime:
-        :return:
+        :param cloud_path: 云端文件路径
+        :param mtime: 修改时间
+        :return: None
         """
         stat = self.stat_file(cloud_path)
         stat['mtime'] = mtime
-        response = self.set_stat(cloud_path, stat)
-        return response
-
-    def get_mtime(self, cloud_path):
-        """
-        获取文件/目录的最近修改时间
-        如果不存在，则将当前时间作为属性附加值附加到云属性中
-        :param cloud_path:
-        :return:
-        """
-        return self.stat_file(cloud_path)['mtime']
+        self.set_stat(cloud_path, stat)
