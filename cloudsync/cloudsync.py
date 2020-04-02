@@ -15,15 +15,13 @@ def start_sync(csp):
     logger = logging.getLogger(inspect.stack()[0].function)
     logger.info('COS 服务提供商为 {csp}'.format(csp=csp))
     logger.info('开始与 {csp} 进行同步...'.format(csp=sys.argv[2]))
-    if csp == 'tencent':
-        cfs = CloudFileSystem('tencent')
-    elif csp == 'ali':
-        cfs = CloudFileSystem('ali')
+
+    if csp in ['ali', 'tencent']:
+        cfs = CloudFileSystem(csp)
+        Synchronize(cfs).start()
     else:
         logger.error("未知的 COS 服务提供商!")
         return
-
-    Synchronize(cfs).start()
 
 
 def print_help():
@@ -47,7 +45,7 @@ if __name__ == '__main__':
     file_handler = logging.FileHandler('cloudsync.log', encoding='utf-8')
     file_handler.setLevel(logging.WARNING)  # 输出到 file 的 log 等级的开关
     file_formatter = logging.Formatter('%(asctime)s [%(levelname)s] '
-                                  '%(filename)s -> %(name)s(line:%(lineno)d): %(message)s')
+                                       '%(filename)s -> %(name)s(line:%(lineno)d): %(message)s')
     file_handler.setFormatter(file_formatter)
     # 创建一个用于输出到控制台的 handler
     console_handler = logging.StreamHandler()
