@@ -196,7 +196,12 @@ class CloudFileSystem:
         :return:
         """
         set_stat_flag = False
-        metadata = self._client.head_object(Bucket=self._bucket, Key=cloud_path)
+        try:
+            metadata = self._client.head_object(Bucket=self._bucket, Key=cloud_path)
+        except qcloud_cos.cos_exception.CosServiceError:
+            # todo: 其他地方需要处理这个 None
+            return None
+
         # get hash
         if 'x-cos-meta-hash' in metadata.keys():
             hash_value = metadata['x-cos-meta-hash']
