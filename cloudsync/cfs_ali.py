@@ -66,7 +66,6 @@ class CloudFileSystem:
                                                        'x-oss-meta-mtime': file_mtime,
                                                        'x-oss-meta-uuid': file_id
                                                    })
-        return response
 
     def download(self, cloud_path, local_path):
         """
@@ -80,7 +79,6 @@ class CloudFileSystem:
         # 写入本地文件
         with open(local_path, 'wb') as f:
             shutil.copyfileobj(response, f)
-        return response
 
     def delete(self, cloud_path):
         """
@@ -88,8 +86,7 @@ class CloudFileSystem:
         :param cloud_path: 云端文件路径
         :return: None
         """
-        response = self._client.delete_object(key=cloud_path)
-        return response
+        self._client.delete_object(key=cloud_path)
 
     def update(self, cloud_path, local_path):
         """
@@ -107,9 +104,8 @@ class CloudFileSystem:
             return
 
         # get file metadata
-        file_size = file_hash = ''
+        file_hash = ''
         try:
-            file_size = str(os.path.getsize(local_path))
             file_hash = utils.get_local_file_hash(local_path)
         except Exception as e:
             print(e)
@@ -121,12 +117,10 @@ class CloudFileSystem:
             response = self._client.put_object(key=cloud_path,
                                                data=f,
                                                headers={
-                                                   'Content-Length': file_size,
                                                    'x-oss-meta-hash': file_hash,
                                                    'x-oss-meta-mtime': file_mtime,
                                                    'x-oss-meta-uuid': file_id
                                                })
-        return response
 
     def rename(self, old_cloud_path: str, new_cloud_path: str):
         """
@@ -151,7 +145,6 @@ class CloudFileSystem:
 
         self.delete(old_cloud_path)
         self.set_mtime(cloud_path=new_cloud_path, mtime=str(int(time.time())))
-        return response
 
     def create_folder(self, cloud_path: str):
         """
@@ -180,7 +173,6 @@ class CloudFileSystem:
                                                'x-oss-meta-mtime': file_mtime,
                                                'x-oss-meta-uuid': file_id
                                            })
-        return response
 
     def list_files(self, cloud_path):
         """
@@ -210,7 +202,6 @@ class CloudFileSystem:
         try:
             metadata = self._client.head_object(key=cloud_path)
         except oss2.exceptions.NotFound:
-            # todo: 其他地方需要处理这个 None
             return None
 
         # get hash
