@@ -262,15 +262,6 @@ class CloudFileSystem:
         response = self.set_stat(cloud_path, stat)
         return response
 
-    def get_hash(self, cloud_path):
-        """
-        获取文件摘要 hash
-        要求如果文件属性附加值不存在 hash 时，读取云文件并计算 hash 值，作为属性 hash 附加到云文件中，并返回此 hash 值
-        :param cloud_path:
-        :return:
-        """
-        return self.stat_file(cloud_path)['hash']
-
     def set_mtime(self, cloud_path, mtime):
         """
         设置最近修改时间
@@ -284,11 +275,3 @@ class CloudFileSystem:
         response = self.set_stat(cloud_path, stat)
         return response
 
-    def get_mtime(self, cloud_path):
-        """
-        获取文件/目录的最近修改时间
-        如果不存在，则将当前时间作为属性附加值附加到云属性中
-        :param cloud_path:
-        :return:
-        """
-        return self.stat_file(cloud_path)['mtime']
