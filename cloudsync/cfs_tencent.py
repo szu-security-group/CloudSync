@@ -73,8 +73,10 @@ class CloudFileSystem:
         :param local_path:
         :return:
         """
+        temp_local_path = local_path + str(uuid())
         response = self._client.get_object(Bucket=self._bucket, Key=cloud_path)
-        response['Body'].get_stream_to_file(local_path)
+        response['Body'].get_stream_to_file(temp_local_path)
+        os.replace(temp_local_path, local_path)
 
     def delete(self, cloud_path):
         """
