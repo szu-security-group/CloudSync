@@ -3,6 +3,7 @@ import pickle
 import signal
 import logging
 import inspect
+import time
 
 import utils
 from cos_config import OP
@@ -147,6 +148,7 @@ class Synchronize:
                             self.metatree_local, self.metatree_local_history,
                             self.cloud_path, self.local_path)
         logger.info('PUSH 算法运行结束')
+        time.sleep(29)
 
     def update_and_validate(self):
         """
