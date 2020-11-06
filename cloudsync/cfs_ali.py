@@ -146,6 +146,18 @@ class CloudFileSystem:
         self.delete(old_cloud_path)
         self.set_mtime(cloud_path=new_cloud_path, mtime=str(int(time.time())))
 
+    def copy(self, src_path: str, dist_path: str):
+        """
+        复制文件
+        :param src_path: 复制的源文件
+        :param dist_path: 复制的目标文件
+        :return: None
+        """
+        self._client.copy_object(source_bucket_name=self._bucket_name,
+                                 source_key=src_path,
+                                 target_key=dist_path)
+        self.set_mtime(cloud_path=dist_path, mtime=str(int(time.time())))
+
     def create_folder(self, cloud_path: str):
         """
         创建一个空目录

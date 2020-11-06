@@ -65,6 +65,15 @@ class CloudFileSystem:
         """
         pass
 
+    def copy(self, src_path: str, dist_path: str):
+        """
+        复制文件
+        :param src_path: 复制的源文件
+        :param dist_path: 复制的目标文件
+        :return: None
+        """
+        pass
+
     def create_folder(self, cloud_path: str):
         """
         创建一个空目录

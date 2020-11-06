@@ -2,7 +2,7 @@ import os
 import logging
 import inspect
 
-from cos_config import OP
+from global_value import OP, hash_table_local, hash_table_cloud
 from synchronize_event_emitter import SynchronizeEventEmitter
 
 
@@ -11,6 +11,7 @@ class SynchronizeEventHandler:
         self.cfs = cfs
         self.from_path = ''
         self.to_path = ''
+        self.kwargs = {}
 
     def create_cloud_folder(self, from_path=None, to_path=None):
         """
@@ -101,6 +102,20 @@ class SynchronizeEventHandler:
             logger.warning('云端已存在文件 {to_path}，操作中止'.format(to_path=to_path))
             return
 
+        if 'file_id' in self.kwargs:
+            records = hash_table_cloud.get(self.kwargs['file_id'], [])
+            if len(records) > 0:
+                logger.info('发现云端存在相同 file_id 的文件，准备复制')
+                for record in records:
+                    try:
+                        self.cfs.copy(record, to_path)
+                        logger.info('复制成功')
+                        return
+                    except Exception as e:
+                        print(e)
+                        logger.info('复制失败')
+                        pass
+
         # upload file
         logger.info('准备将本地文件 {from_path} 上传到云端文件 {to_path}'.format(from_path=from_path, to_path=to_path))
         self.cfs.upload(to_path, from_path)
@@ -125,6 +140,19 @@ class SynchronizeEventHandler:
         if os.path.exists(to_path):
             logger.warning('本地已存在文件 {to_path}，操作中止'.format(to_path=to_path))
             return
+
+        if 'file_id' in self.kwargs:
+            records = hash_table_local.get(self.kwargs['file_id'], [])
+            if len(records) > 0:
+                logger.info('发现本地存在相同 file_id 的文件，准备复制')
+                for record in records:
+                    try:
+                        os.rename(record, to_path)
+                        logger.info('复制成功')
+                        return
+                    except Exception:
+                        logger.info('复制失败')
+                        pass
 
         # download file
         logger.info('准备将云端文件 {from_path} 下载到本地文件 {to_path}'.format(from_path=from_path, to_path=to_path))
@@ -235,6 +263,20 @@ class SynchronizeEventHandler:
                                    .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
         from_path = self.from_path
         to_path = self.to_path
+
+        if 'file_id' in self.kwargs:
+            records = hash_table_cloud.get(self.kwargs['file_id'], [])
+            if len(records) > 0:
+                logger.info('发现云端存在相同 file_id 的文件，准备复制')
+                for record in records:
+                    try:
+                        self.cfs.copy(record, to_path)
+                        logger.info('复制成功')
+                        return
+                    except Exception:
+                        logger.info('复制失败')
+                        pass
+
         logger.info('准备将本地文件 {from_path} 上传到云端文件 {to_path}'.format(from_path=from_path, to_path=to_path))
         self.cfs.update(to_path, from_path)
         logger.info('上传本地文件 {from_path} 到云端文件 {to_path} 完成'.format(from_path=from_path, to_path=to_path))
@@ -247,6 +289,20 @@ class SynchronizeEventHandler:
                                    .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
         from_path = self.from_path
         to_path = self.to_path
+
+        if 'file_id' in self.kwargs:
+            records = hash_table_local.get(self.kwargs['file_id'], [])
+            if len(records) > 0:
+                logger.info('发现本地存在相同 file_id 的文件，准备复制')
+                for record in records:
+                    try:
+                        os.rename(record, to_path)
+                        logger.info('复制成功')
+                        return
+                    except Exception:
+                        logger.info('复制失败')
+                        pass
+
         logger.info('准备将云端文件 {from_path} 下载到本地文件 {to_path}'.format(from_path=from_path, to_path=to_path))
         self.cfs.download(from_path, to_path)
         logger.info('下载云端文件 {from_path} 到本地文件 {to_path} 完成'.format(from_path=from_path, to_path=to_path))
@@ -350,6 +406,7 @@ class SynchronizeEventHandler:
         task_index = observable.task_index
         self.from_path = observable.from_path
         self.to_path = observable.to_path
+        self.kwargs = observable.kwargs
 
         logger.debug('任务编号: {task_index}, 参数列表: [\'{from_path}\', \'{to_path}\'], 将执行编号对应操作'
                      .format(task_index=task_index, from_path=self.from_path, to_path=self.to_path))

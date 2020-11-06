@@ -26,6 +26,7 @@ class CloudFileSystem:
         self.delete = cfs.delete
         self.update = cfs.update
         self.rename = cfs.rename
+        self.copy = cfs.copy
         self.create_folder = cfs.create_folder
         self.list_files = cfs.list_files
         self.stat_file = cfs.stat_file

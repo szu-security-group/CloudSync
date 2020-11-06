@@ -43,6 +43,7 @@ def get_buffer_hash(buffer: bytes):
     return getattr(hashlib, hash_type)(buffer).hexdigest()
 
 
+'''
 def get_entire_local_directory_hash(directory):
     """
     计算本地目录状态的摘要
@@ -76,3 +77,4 @@ def get_entire_cloud_directory_hash(directory, cfs):
             files_hash_value += child.hash_value
     directory.hash_value = get_buffer_hash(files_hash_value.encode())
     return directory.hash_value
+'''

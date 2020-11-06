@@ -14,6 +14,7 @@ class SynchronizeEventEmitter:
         self.task_index = 0
         self.from_path = ''
         self.to_path = ''
+        self.kwargs = {}
 
     def register(self, observer):
         """
@@ -52,13 +53,13 @@ class SynchronizeEventEmitter:
         """
         logger = logging.getLogger('{class_name} -> {function_name}'
                                    .format(class_name=__class__.__name__, function_name=inspect.stack()[0].function))
-        logger.info('被观察者将通知所有已注册的观察者')
+        logger.debug('被观察者将通知所有已注册的观察者')
         for observer in self._observers:
             observer.update(self)
-            logger.info('已通知 {observer}'.format(observer=observer))
-        logger.info('通知完毕')
+            logger.debug('已通知 {observer}'.format(observer=observer))
+        logger.debug('通知完毕')
 
-    def set_data(self, task_index, *args):
+    def set_data(self, task_index, *args, **kwargs):
         """
         更新被观察者的数据，并调用 notify() 更新观察者
         :param task_index: 任务序号
@@ -75,12 +76,13 @@ class SynchronizeEventEmitter:
             self.to_path = args[1]
         except IndexError:
             self.to_path = ''
+        self.kwargs = kwargs
 
         if self.to_path != '':
-            logger.debug('新值为: task_index={task_index}, from_path={from_path}, to_path={to_path}'
-                         .format(task_index=self.task_index, from_path=self.from_path, to_path=self.to_path))
+            logger.info('新值为: task_index={task_index}, from_path={from_path}, to_path={to_path}'
+                        .format(task_index=self.task_index, from_path=self.from_path, to_path=self.to_path))
         else:
-            logger.debug('新值为: task_index={task_index}, from_path={from_path}'
-                         .format(task_index=self.task_index, from_path=self.from_path))
+            logger.info('新值为: task_index={task_index}, from_path={from_path}'
+                        .format(task_index=self.task_index, from_path=self.from_path))
 
         self.notify()
