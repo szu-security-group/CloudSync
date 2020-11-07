@@ -61,32 +61,6 @@ class DirectoryStatus(Catalog):
         if catalog not in self.children:
             self.children.add(catalog)
 
-    def remove(self, filename):
-        """
-        将文件(夹)结构从该文件夹的子文件列表中移除
-        :param filename: 文件(夹)结构 或 文件(夹)的名字
-        :return: None
-        """
-        if isinstance(filename, Catalog):
-            filename = filename.filename
-        filename = str(filename)
-        for catalog in self.children.__iter__():
-            if catalog.filename == filename:
-                self.children.remove(catalog)
-                break
-
-    def find_catalog(self, obj):
-        """
-        根据 obj 在子文件列表中查找文件(夹)
-        :param obj: 子文件(夹)的 文件名 或 散列值 或 文件ID
-        :return: 文件(夹)结构
-        """
-        obj = str(obj)
-        for catalog in self.children.__iter__():
-            if obj in [catalog.filename, catalog.file_id]:
-                return catalog
-        return None
-
     def __str__(self):
         return '[DirectoryStatus: filename={filename} file_id={file_id}'.format(
             filename=self.filename,
@@ -138,7 +112,7 @@ def initialize_metatree_local(local_path: str, local_dict: dict):
             # 插入目录
             filename += '/'
             logger.debug('发现子目录 {filename}'.format(filename=filename))
-            subdir = initialize_metatree_local(filename)
+            subdir = initialize_metatree_local(filename, local_dict)
             # files_hash_sum += subdir.file_id
             root.insert(subdir)
             logger.info('将子目录 {filename} 的目录状态插入到当前目录 {local_path}'.format(filename=filename, local_path=local_path))
@@ -197,7 +171,7 @@ def initialize_metatree_cloud(cloud_path: str, cfs: CloudFileSystem, cloud_dict:
         if filename.endswith('/'):
             # 插入目录
             logger.debug('发现子目录 {filename}'.format(filename=filename))
-            subdir = initialize_metatree_cloud(filename, cfs)
+            subdir = initialize_metatree_cloud(filename, cfs, cloud_dict)
             # files_hash_sum += subdir.file_id
             root.insert(subdir)
             logger.info('将子目录 {filename} 的目录状态插入到当前目录 {cloud_path}'.format(filename=filename, cloud_path=cloud_path))

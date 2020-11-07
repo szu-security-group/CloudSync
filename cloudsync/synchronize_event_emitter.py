@@ -64,6 +64,7 @@ class SynchronizeEventEmitter:
         更新被观察者的数据，并调用 notify() 更新观察者
         :param task_index: 任务序号
         :param args: 观察者执行参数， 1~2个
+        :param kwargs: 额外参数，可能包含有 file_id
         :return: None
         """
         logger = logging.getLogger('{class_name} -> {function_name}'

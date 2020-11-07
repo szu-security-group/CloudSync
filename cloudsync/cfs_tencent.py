@@ -47,7 +47,7 @@ class CloudFileSystem:
         :return: None
         """
         if local_path.endswith('/'):
-            response = self.create_folder(cloud_path)
+            self.create_folder(cloud_path)
         else:
             # get file metadata
             file_hash = ''
@@ -60,14 +60,14 @@ class CloudFileSystem:
 
             # upload file
             with open(local_path, 'rb') as f:
-                response = self._client.put_object(Bucket=self._bucket,
-                                                   Key=cloud_path,
-                                                   Body=f,
-                                                   Metadata={
-                                                       'x-cos-meta-hash': file_hash,
-                                                       'x-cos-meta-mtime': file_mtime,
-                                                       'x-cos-meta-uuid': file_id
-                                                   })
+                self._client.put_object(Bucket=self._bucket,
+                                        Key=cloud_path,
+                                        Body=f,
+                                        Metadata={
+                                            'x-cos-meta-hash': file_hash,
+                                            'x-cos-meta-mtime': file_mtime,
+                                            'x-cos-meta-uuid': file_id
+                                        })
 
     def download(self, cloud_path, local_path):
         """
@@ -137,15 +137,15 @@ class CloudFileSystem:
             for filename in self.list_files(old_cloud_path):
                 self.rename(old_cloud_path + filename, new_cloud_path + filename)
 
-        response = self._client.copy_object(Bucket=self._bucket,
-                                            Key=new_cloud_path,
-                                            CopySource={
-                                                'Appid': self._app_id,
-                                                'Bucket': self._bucket_name,
-                                                'Key': old_cloud_path,
-                                                'Region': self._region
-                                            },
-                                            CopyStatus='Copy')
+        self._client.copy_object(Bucket=self._bucket,
+                                 Key=new_cloud_path,
+                                 CopySource={
+                                     'Appid': self._app_id,
+                                     'Bucket': self._bucket_name,
+                                     'Key': old_cloud_path,
+                                     'Region': self._region
+                                 },
+                                 CopyStatus='Copy')
         self.delete(old_cloud_path)
         self.set_mtime(cloud_path=new_cloud_path, mtime=str(int(time.time())))
 
@@ -178,14 +178,14 @@ class CloudFileSystem:
         file_id = str(uuid())
 
         # create folder
-        response = self._client.put_object(Bucket=self._bucket,
-                                           Key=cloud_path,
-                                           Body=b'',
-                                           Metadata={
-                                               'x-cos-meta-hash': file_hash,
-                                               'x-cos-meta-mtime': file_mtime,
-                                               'x-cos-meta-uuid': file_id
-                                           })
+        self._client.put_object(Bucket=self._bucket,
+                                Key=cloud_path,
+                                Body=b'',
+                                Metadata={
+                                    'x-cos-meta-hash': file_hash,
+                                    'x-cos-meta-mtime': file_mtime,
+                                    'x-cos-meta-uuid': file_id
+                                })
 
     def list_files(self, cloud_path):
         """
@@ -260,16 +260,16 @@ class CloudFileSystem:
             'x-cos-meta-mtime': stat['mtime'],
             'x-cos-meta-uuid': stat['uuid'],
         }
-        response = self._client.copy_object(Bucket=self._bucket,
-                                            Key=cloud_path,
-                                            CopySource={
-                                                'Appid': self._app_id,
-                                                'Bucket': self._bucket_name,
-                                                'Key': cloud_path,
-                                                'Region': self._region
-                                            },
-                                            CopyStatus='Replaced',
-                                            Metadata=metadata)
+        self._client.copy_object(Bucket=self._bucket,
+                                 Key=cloud_path,
+                                 CopySource={
+                                     'Appid': self._app_id,
+                                     'Bucket': self._bucket_name,
+                                     'Key': cloud_path,
+                                     'Region': self._region
+                                 },
+                                 CopyStatus='Replaced',
+                                 Metadata=metadata)
 
     def set_hash(self, cloud_path, hash_value):
         """

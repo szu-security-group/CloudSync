@@ -46,7 +46,7 @@ class CloudFileSystem:
         :return: None
         """
         if local_path.endswith('/'):
-            response = self.create_folder(cloud_path)
+            self.create_folder(cloud_path)
         else:
             # get file metadata
             file_hash = ''
@@ -59,13 +59,13 @@ class CloudFileSystem:
 
             # upload file
             with open(local_path, 'rb') as f:
-                response = self._client.put_object(key=cloud_path,
-                                                   data=f,
-                                                   headers={
-                                                       'x-oss-meta-hash': file_hash,
-                                                       'x-oss-meta-mtime': file_mtime,
-                                                       'x-oss-meta-uuid': file_id
-                                                   })
+                self._client.put_object(key=cloud_path,
+                                        data=f,
+                                        headers={
+                                            'x-oss-meta-hash': file_hash,
+                                            'x-oss-meta-mtime': file_mtime,
+                                            'x-oss-meta-uuid': file_id
+                                        })
 
     def download(self, cloud_path, local_path):
         """
@@ -99,7 +99,6 @@ class CloudFileSystem:
         :param local_path: 本地文件路径
         :return: None
         """
-        import os
         if cloud_path.endswith('/') or not self._client.object_exists(key=cloud_path):
             return
 
@@ -114,13 +113,13 @@ class CloudFileSystem:
 
         # upload file
         with open(local_path, 'rb') as f:
-            response = self._client.put_object(key=cloud_path,
-                                               data=f,
-                                               headers={
-                                                   'x-oss-meta-hash': file_hash,
-                                                   'x-oss-meta-mtime': file_mtime,
-                                                   'x-oss-meta-uuid': file_id
-                                               })
+            self._client.put_object(key=cloud_path,
+                                    data=f,
+                                    headers={
+                                        'x-oss-meta-hash': file_hash,
+                                        'x-oss-meta-mtime': file_mtime,
+                                        'x-oss-meta-uuid': file_id
+                                    })
 
     def rename(self, old_cloud_path: str, new_cloud_path: str):
         """
@@ -135,13 +134,13 @@ class CloudFileSystem:
             # 对目录下的文件进行递归重命名
             for filename in self.list_files(old_cloud_path):
                 self.rename(old_cloud_path + filename, new_cloud_path + filename)
-            response = self._client.copy_object(source_bucket_name=self._bucket_name,
-                                                source_key=old_cloud_path,
-                                                target_key=new_cloud_path)
+            self._client.copy_object(source_bucket_name=self._bucket_name,
+                                     source_key=old_cloud_path,
+                                     target_key=new_cloud_path)
         else:
-            response = self._client.copy_object(source_bucket_name=self._bucket_name,
-                                                source_key=old_cloud_path,
-                                                target_key=new_cloud_path)
+            self._client.copy_object(source_bucket_name=self._bucket_name,
+                                     source_key=old_cloud_path,
+                                     target_key=new_cloud_path)
 
         self.delete(old_cloud_path)
         self.set_mtime(cloud_path=new_cloud_path, mtime=str(int(time.time())))
@@ -178,13 +177,13 @@ class CloudFileSystem:
         file_id = str(uuid())
 
         # create folder
-        response = self._client.put_object(key=cloud_path,
-                                           data=b'',
-                                           headers={
-                                               'x-oss-meta-hash': file_hash,
-                                               'x-oss-meta-mtime': file_mtime,
-                                               'x-oss-meta-uuid': file_id
-                                           })
+        self._client.put_object(key=cloud_path,
+                                data=b'',
+                                headers={
+                                    'x-oss-meta-hash': file_hash,
+                                    'x-oss-meta-mtime': file_mtime,
+                                    'x-oss-meta-uuid': file_id
+                                })
 
     def list_files(self, cloud_path):
         """

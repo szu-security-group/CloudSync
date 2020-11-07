@@ -150,7 +150,8 @@ class SynchronizeEventHandler:
                         os.rename(record, to_path)
                         logger.info('复制成功')
                         return
-                    except Exception:
+                    except Exception as e:
+                        print(e)
                         logger.info('复制失败')
                         pass
 
@@ -273,7 +274,8 @@ class SynchronizeEventHandler:
                         self.cfs.copy(record, to_path)
                         logger.info('复制成功')
                         return
-                    except Exception:
+                    except Exception as e:
+                        print(e)
                         logger.info('复制失败')
                         pass
 
@@ -299,7 +301,8 @@ class SynchronizeEventHandler:
                         os.rename(record, to_path)
                         logger.info('复制成功')
                         return
-                    except Exception:
+                    except Exception as e:
+                        print(e)
                         logger.info('复制失败')
                         pass
 
