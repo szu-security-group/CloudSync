@@ -13,4 +13,4 @@ pycryptodome==3.9.7
 requests==2.23.0
 six==1.14.0
 sortedcontainers==2.1.0
-urllib3==1.25.8
+urllib3==1.26.5
