@@ -1,12 +1,16 @@
 # CloudSync
 
-这是一个帮助你同步本地文件和位于对象存储的文件的同步工具。
+这是一个帮助用户在本地存储与云对象存储之间同步文件的工具。
 
 该项目实现了双向文件同步，即它既可以将本地文件同步到对象存储，也可以将对象存储的文件同步到本地。目前支持阿里云和腾讯云的对象存储服务，但它可拓展至任意的对象存储服务。该项目使用 Python 3 进行开发。
 
+以下是本项目的系统框架示意图：
+
+![System Architecture](system_architecture.png)
+
 ## 安装
 
-在安装之前，首先要确保正确安装了 Python 3 和 pip 。然后运行一下命令：
+在安装之前，首先要确保正确安装了 Python 3 和 pip 。然后运行以下命令：
 
 ```bash
 git clone https://github.com/excalibur44/CloudSync.git
